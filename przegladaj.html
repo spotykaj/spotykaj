@@ -1,0 +1,117 @@
+<!doctype html>
+<html lang="pl">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>Przeglądaj — Spotykaj</title>
+  <link rel="stylesheet" href="css/style.css" />
+</head>
+<body>
+
+<header class="nav">
+  <div class="container nav-inner">
+    <a class="brand" href="index.html">spotykaj</a>
+    <nav class="nav-links">
+      <a class="btn btn-ghost" href="login.html">Zaloguj</a>
+      <a class="btn btn-primary" href="register.html">Zarejestruj</a>
+    </nav>
+  </div>
+</header>
+
+<main class="page">
+  <!-- HERO SEARCH -->
+  <section class="hero hero-search">
+    <div class="container hero-grid">
+      <div class="hero-copy">
+        <h1>Wyszukaj ogłoszenia</h1>
+        <p class="muted">
+          Wybierz <b>województwo</b> i <b>miasto</b>, a pokażemy dostępne profile/ogłoszenia.
+        </p>
+
+        <form id="searchForm" class="searchbar">
+          <div class="field">
+            <label for="woj">Województwo</label>
+            <select id="woj" class="input"></select>
+          </div>
+
+          <div class="field">
+            <label for="city">Miasto</label>
+            <select id="city" class="input"></select>
+          </div>
+
+          <button class="btn btn-primary" type="submit">Szukaj</button>
+          <button class="btn btn-ghost" type="button" id="toggleAdvanced">Pokaż filtry</button>
+        </form>
+
+        <div id="advanced" class="advanced hidden">
+          <div class="grid3">
+            <div class="field">
+              <label for="cat">Kategoria</label>
+              <select id="cat" class="input">
+                <option value="">Wszystkie</option>
+                <option>Usługi</option>
+                <option>Praca</option>
+                <option>Wynajem</option>
+                <option>Inne</option>
+              </select>
+            </div>
+            <div class="field">
+              <label for="type">Typ konta</label>
+              <select id="type" class="input">
+                <option value="">Wszystkie</option>
+                <option value="private">Prywatne</option>
+                <option value="business">Firma</option>
+              </select>
+            </div>
+            <div class="field">
+              <label for="q">Szukaj (tekst)</label>
+              <input id="q" class="input" placeholder="np. hydraulik, masaż, fotograf…" />
+            </div>
+          </div>
+        </div>
+
+        <div class="chips">
+          <span class="chip">PL-only MVP</span>
+          <span class="chip">Województwo + Miasto</span>
+          <span class="chip">Lista wyników</span>
+        </div>
+      </div>
+
+      <div class="hero-card">
+        <div class="card card-glow">
+          <div class="card-title">Szybka nawigacja</div>
+          <div class="card-text muted">Zobacz wyniki poniżej po wyszukaniu.</div>
+          <div class="mini-stats">
+            <div class="mini">
+              <div class="mini-k">Wyniki</div>
+              <div class="mini-v" id="resultCount">0</div>
+            </div>
+            <div class="mini">
+              <div class="mini-k">Widok</div>
+              <div class="mini-v">Karty</div>
+            </div>
+            <div class="mini">
+              <div class="mini-k">Status</div>
+              <div class="mini-v">Demo</div>
+            </div>
+          </div>
+          <a class="btn btn-primary w100" href="#results">Przewiń do wyników</a>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- RESULTS -->
+  <section class="container section" id="results">
+    <div class="section-head">
+      <h2>Wyniki</h2>
+      <p class="muted" id="resultsHint">Użyj wyszukiwarki powyżej.</p>
+    </div>
+
+    <div id="cards" class="cards"></div>
+  </section>
+</main>
+
+<script src="js/browse.js"></script>
+</body>
+</html>

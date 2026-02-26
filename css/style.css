@@ -87,3 +87,23 @@ input:focus{border-color:rgba(34,197,94,.5)}
   object-fit:cover;
   display:none;
 }
+.hero-search { padding: 48px 0; }
+.hero-grid { display: grid; grid-template-columns: 1.2fr .8fr; gap: 24px; align-items: start; }
+.searchbar { display: grid; grid-template-columns: 1fr 1fr auto auto; gap: 12px; margin-top: 16px; }
+.field label { display:block; font-size: 12px; opacity: .8; margin-bottom: 6px; }
+.advanced.hidden { display:none; }
+.grid3 { display:grid; grid-template-columns: repeat(3, 1fr); gap: 12px; margin-top: 12px; }
+.cards { display:grid; grid-template-columns: repeat(3, 1fr); gap: 16px; }
+.listing-actions { display:flex; gap: 10px; margin-top: 12px; }
+.tagrow { display:flex; flex-wrap:wrap; gap: 8px; margin-top: 10px; }
+.tag { font-size: 12px; padding: 6px 10px; border-radius: 999px; background: rgba(255,255,255,.06); }
+.badge { font-size: 12px; padding: 6px 10px; border-radius: 999px; }
+.badge-biz { background: rgba(0,255,100,.12); }
+.badge-private { background: rgba(255,255,255,.10); }
+.w100 { width:100%; display:block; text-align:center; }
+@media (max-width: 980px){
+  .hero-grid { grid-template-columns: 1fr; }
+  .searchbar { grid-template-columns: 1fr; }
+  .grid3 { grid-template-columns: 1fr; }
+  .cards { grid-template-columns: 1fr; }
+}
