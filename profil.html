@@ -1,0 +1,96 @@
+<!doctype html>
+<html lang="pl">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>Profil — Spotykaj</title>
+  <link rel="stylesheet" href="css/style.css" />
+</head>
+<body>
+  <header class="topbar">
+    <div class="brand">spotykaj</div>
+    <nav class="nav">
+      <a class="btn ghost" href="app.html">Panel</a>
+      <button id="logoutBtn" class="btn ghost">Wyloguj</button>
+    </nav>
+  </header>
+
+  <main class="container">
+    <section class="card">
+      <h1 class="h1">Twój profil</h1>
+      <p class="muted">Uzupełnij dane — to demo zapisuje wszystko lokalnie w przeglądarce.</p>
+
+      <div class="grid2">
+        <div>
+          <label class="label">Imię / Nick</label>
+          <input id="name" class="input" type="text" placeholder="np. Roland" />
+        </div>
+        <div>
+          <label class="label">Wiek</label>
+          <input id="age" class="input" type="number" min="18" max="99" placeholder="np. 30" />
+        </div>
+        <div>
+          <label class="label">Miasto</label>
+          <input id="city" class="input" type="text" placeholder="np. Berlin" />
+        </div>
+        <div>
+          <label class="label">Płeć (demo)</label>
+          <select id="gender" class="input">
+            <option value="">— wybierz —</option>
+            <option value="M">Mężczyzna</option>
+            <option value="K">Kobieta</option>
+            <option value="Inna">Inna</option>
+          </select>
+        </div>
+      </div>
+
+      <div style="margin-top:14px">
+        <label class="label">Opis (Bio)</label>
+        <textarea id="bio" class="input" rows="5" placeholder="Napisz krótko o sobie..."></textarea>
+      </div>
+
+      <div class="row" style="margin-top:16px; gap:10px">
+        <button id="saveBtn" class="btn">Zapisz profil</button>
+        <a class="btn ghost" href="app.html">Wróć</a>
+        <span id="status" class="muted" style="margin-left:auto"></span>
+      </div>
+    </section>
+  </main>
+
+  <script src="js/app.js"></script>
+  <script>
+    // Guard: wymagaj logowania (tak jak app.html)
+    const session = JSON.parse(localStorage.getItem("spotykaj_session") || "null");
+    if (!session?.loggedIn) location.href = "login.html";
+
+    // Load user
+    const user = JSON.parse(localStorage.getItem("spotykaj_user") || "{}");
+
+    const $ = (id) => document.getElementById(id);
+    $("name").value = user.name || "";
+    $("age").value = user.age || "";
+    $("city").value = user.city || "";
+    $("gender").value = user.gender || "";
+    $("bio").value = user.bio || "";
+
+    $("saveBtn").addEventListener("click", () => {
+      const updated = {
+        ...user,
+        name: $("name").value.trim(),
+        age: $("age").value ? Number($("age").value) : "",
+        city: $("city").value.trim(),
+        gender: $("gender").value,
+        bio: $("bio").value.trim()
+      };
+      localStorage.setItem("spotykaj_user", JSON.stringify(updated));
+      $("status").textContent = "✅ Zapisano";
+      setTimeout(() => ($("status").textContent = ""), 1500);
+    });
+
+    $("logoutBtn").addEventListener("click", () => {
+      localStorage.setItem("spotykaj_session", JSON.stringify({ loggedIn:false }));
+      location.href = "login.html";
+    });
+  </script>
+</body>
+</html>
