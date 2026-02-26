@@ -1,175 +1,142 @@
-// js/app.js — Spotykaj Auth-Demo (Frontend only)
-// Speichert "Login" in localStorage. KEIN echtes Backend / keine echte Sicherheit.
+// Spotykaj MVP Auth Demo (Client-only)
+// Speichert User + Session im localStorage.
+// NICHT für Produktion. Später ersetzen wir das durch echtes Backend (z.B. Supabase).
 
-const AUTH_KEY = "spotykaj_auth_v1";
+const LS_USERS = "spotykaj_users";
+const LS_SESSION = "spotykaj_session";
 
-function getAuth() {
-  try {
-    return JSON.parse(localStorage.getItem(AUTH_KEY) || "null");
-  } catch {
-    return null;
-  }
+function loadUsers() {
+  try { return JSON.parse(localStorage.getItem(LS_USERS) || "[]"); }
+  catch { return []; }
+}
+function saveUsers(users) {
+  localStorage.setItem(LS_USERS, JSON.stringify(users));
+}
+function getSession() {
+  try { return JSON.parse(localStorage.getItem(LS_SESSION) || "null"); }
+  catch { return null; }
+}
+function setSession(session) {
+  localStorage.setItem(LS_SESSION, JSON.stringify(session));
+}
+function clearSession() {
+  localStorage.removeItem(LS_SESSION);
 }
 
-function setAuth(authObj) {
-  localStorage.setItem(AUTH_KEY, JSON.stringify(authObj));
+function byId(id) { return document.getElementById(id); }
+
+function redirectIfAuth() {
+  const s = getSession();
+  if (s?.user?.email) window.location.href = "app.html";
+}
+function requireAuth() {
+  const s = getSession();
+  if (!s?.user?.email) window.location.href = "login.html";
 }
 
-function clearAuth() {
-  localStorage.removeItem(AUTH_KEY);
+function showMsg(text, ok = false) {
+  const el = byId("msg");
+  if (!el) return;
+  el.textContent = text;
+  el.className = "msg " + (ok ? "ok" : "err");
 }
 
-function isLoggedIn() {
-  const a = getAuth();
-  return !!(a && a.loggedIn && a.email);
+function hashLike(pw) {
+  // Mini-Hash für Demo (kein Security!). Nur damit nicht klartext.
+  let h = 0;
+  for (let i = 0; i < pw.length; i++) h = (h * 31 + pw.charCodeAt(i)) >>> 0;
+  return String(h);
 }
 
-function $(id) {
-  return document.getElementById(id);
-}
-
-/**
- * Page Guard:
- * - Setze <body data-requires-auth="true"> auf Seiten die Login brauchen (z.B. dashboard.html)
- * - Setze <body data-redirect-if-auth="true"> auf login/register (wenn schon eingeloggt -> dashboard)
- */
-function applyGuards() {
-  const body = document.body;
-  const requiresAuth = body.dataset.requiresAuth === "true";
-  const redirectIfAuth = body.dataset.redirectIfAuth === "true";
-
-  if (requiresAuth && !isLoggedIn()) {
-    // Merken wo man hinwollte
-    sessionStorage.setItem("spotykaj_return_to", location.pathname.split("/").pop() || "index.html");
-    location.replace("login.html");
-    return;
-  }
-
-  if (redirectIfAuth && isLoggedIn()) {
-    location.replace("dashboard.html");
-    return;
-  }
-}
-
-function renderNavbarState() {
-  // Optional: Bereiche in HTML per ID steuern
-  // <span id="navUser"></span> / <a id="navLogout" ...>
-  const navUser = $("navUser");
-  const navLogout = $("navLogout");
-  const navLogin = $("navLogin");
-  const navRegister = $("navRegister");
-
-  const a = getAuth();
-
-  if (isLoggedIn()) {
-    if (navUser) navUser.textContent = a.email;
-    if (navLogout) navLogout.style.display = "inline-block";
-    if (navLogin) navLogin.style.display = "none";
-    if (navRegister) navRegister.style.display = "none";
-  } else {
-    if (navUser) navUser.textContent = "";
-    if (navLogout) navLogout.style.display = "none";
-    if (navLogin) navLogin.style.display = "inline-block";
-    if (navRegister) navRegister.style.display = "inline-block";
-  }
-}
-
-function wireLogout() {
-  const btn = $("navLogout");
-  if (!btn) return;
-
-  btn.addEventListener("click", (e) => {
-    e.preventDefault();
-    clearAuth();
-    location.replace("index.html");
-  });
-}
-
-function wireLoginForm() {
-  // Erwartet Form:
-  // <form id="loginForm">
-  //  <input id="loginEmail">
-  //  <input id="loginPassword">
-  // </form>
-  const form = $("loginForm");
-  if (!form) return;
-
-  form.addEventListener("submit", (e) => {
-    e.preventDefault();
-
-    const email = ($("loginEmail")?.value || "").trim().toLowerCase();
-    const pass = $("loginPassword")?.value || "";
-
-    const err = $("loginError");
-    if (err) err.textContent = "";
-
-    if (!email || !pass) {
-      if (err) err.textContent = "Bitte E-Mail und Passwort eingeben.";
-      return;
-    }
-
-    // Demo: "erfolgreich" einloggen (wir prüfen nix echt)
-    setAuth({
-      loggedIn: true,
-      email,
-      loginAt: new Date().toISOString(),
-    });
-
-    const returnTo = sessionStorage.getItem("spotykaj_return_to") || "dashboard.html";
-    sessionStorage.removeItem("spotykaj_return_to");
-
-    location.replace(returnTo);
-  });
-}
-
-function wireRegisterForm() {
-  // Erwartet Form:
-  // <form id="registerForm">
-  //  <input id="regEmail">
-  //  <input id="regPassword">
-  //  <input id="regPassword2">
-  // </form>
-  const form = $("registerForm");
-  if (!form) return;
-
-  form.addEventListener("submit", (e) => {
-    e.preventDefault();
-
-    const email = ($("regEmail")?.value || "").trim().toLowerCase();
-    const p1 = $("regPassword")?.value || "";
-    const p2 = $("regPassword2")?.value || "";
-
-    const err = $("registerError");
-    if (err) err.textContent = "";
-
-    if (!email || !p1 || !p2) {
-      if (err) err.textContent = "Bitte alle Felder ausfüllen.";
-      return;
-    }
-    if (p1.length < 6) {
-      if (err) err.textContent = "Passwort muss mind. 6 Zeichen haben (Demo-Regel).";
-      return;
-    }
-    if (p1 !== p2) {
-      if (err) err.textContent = "Passwörter stimmen nicht überein.";
-      return;
-    }
-
-    // Demo: wir "registrieren" nicht wirklich, wir loggen direkt ein
-    setAuth({
-      loggedIn: true,
-      email,
-      signupAt: new Date().toISOString(),
-    });
-
-    location.replace("dashboard.html");
-  });
-}
-
+// --- Bootstrapping je Seite ---
 document.addEventListener("DOMContentLoaded", () => {
-  applyGuards();
-  renderNavbarState();
-  wireLogout();
-  wireLoginForm();
-  wireRegisterForm();
+  const body = document.body;
+
+  if (body.dataset.redirectIfAuth === "true") redirectIfAuth();
+  if (body.dataset.requiresAuth === "true") requireAuth();
+
+  const loginForm = byId("loginForm");
+  const registerForm = byId("registerForm");
+
+  if (registerForm) {
+    registerForm.addEventListener("submit", (e) => {
+      e.preventDefault();
+      const name = byId("name").value.trim();
+      const email = byId("email").value.trim().toLowerCase();
+      const password = byId("password").value;
+
+      if (!name || !email || !password) return showMsg("Bitte alle Felder ausfüllen.");
+
+      const users = loadUsers();
+      if (users.some(u => u.email === email)) return showMsg("Diese E-Mail ist schon registriert.");
+
+      const user = {
+        id: crypto.randomUUID ? crypto.randomUUID() : String(Date.now()),
+        name,
+        email,
+        pw: hashLike(password),
+        coins: 0,
+        createdAt: new Date().toISOString()
+      };
+
+      users.push(user);
+      saveUsers(users);
+
+      setSession({ user: { id: user.id, name: user.name, email: user.email } });
+      showMsg("Account erstellt. Weiterleitung…", true);
+      setTimeout(() => (window.location.href = "app.html"), 600);
+    });
+  }
+
+  if (loginForm) {
+    loginForm.addEventListener("submit", (e) => {
+      e.preventDefault();
+      const email = byId("email").value.trim().toLowerCase();
+      const password = byId("password").value;
+
+      const users = loadUsers();
+      const user = users.find(u => u.email === email);
+
+      if (!user) return showMsg("User nicht gefunden.");
+      if (user.pw !== hashLike(password)) return showMsg("Passwort falsch.");
+
+      setSession({ user: { id: user.id, name: user.name, email: user.email } });
+      showMsg("Login OK. Weiterleitung…", true);
+      setTimeout(() => (window.location.href = "app.html"), 400);
+    });
+  }
+
+  // App-Seite
+  const logoutBtn = byId("logoutBtn");
+  if (logoutBtn) {
+    logoutBtn.addEventListener("click", () => {
+      clearSession();
+      window.location.href = "login.html";
+    });
+  }
+
+  const userName = byId("userName");
+  if (userName) {
+    const s = getSession();
+    userName.textContent = s?.user?.name || "User";
+  }
+
+  const coinsEl = byId("coins");
+  const addCoinBtn = byId("addCoinBtn");
+  if (coinsEl && addCoinBtn) {
+    const s = getSession();
+    const users = loadUsers();
+    const idx = users.findIndex(u => u.id === s?.user?.id);
+    if (idx >= 0) coinsEl.textContent = String(users[idx].coins || 0);
+
+    addCoinBtn.addEventListener("click", () => {
+      const s2 = getSession();
+      const users2 = loadUsers();
+      const i2 = users2.findIndex(u => u.id === s2?.user?.id);
+      if (i2 < 0) return;
+      users2[i2].coins = (users2[i2].coins || 0) + 1;
+      saveUsers(users2);
+      coinsEl.textContent = String(users2[i2].coins);
+    });
+  }
 });
