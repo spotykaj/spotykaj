@@ -1,0 +1,58 @@
+<!doctype html>
+<html lang="de">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>Spotykaj – App</title>
+  <link rel="stylesheet" href="css/style.css" />
+</head>
+<body>
+
+<header>
+  <h2><a href="index.html" style="color:white;text-decoration:none;">Spotykaj</a></h2>
+  <nav>
+    <a href="#" id="btnLogout">Logout</a>
+  </nav>
+</header>
+
+<section class="hero" style="max-width:720px;margin:0 auto;">
+  <h1 style="font-size:36px;">Dashboard</h1>
+  <p id="hello"></p>
+
+  <div style="margin-top:24px; text-align:left; background:#111827; padding:18px; border-radius:12px;">
+    <b>Coins:</b> <span id="coins">0</span>
+    <div style="margin-top:12px;">
+      <button class="btn" id="btnAddCoin" style="border:0;cursor:pointer;">+1 Coin (Demo)</button>
+    </div>
+    <p style="opacity:.8;margin-top:12px;">Nächster Schritt: Coin-System richtig + Membership-Logik.</p>
+  </div>
+</section>
+
+<script src="js/app.js"></script>
+<script>
+  SpotykajAuth.init();
+  const u = SpotykajAuth.currentUser();
+  if(!u) location.href = "login.html";
+
+  const hello = document.getElementById("hello");
+  const coinsEl = document.getElementById("coins");
+  hello.textContent = `Hi ${u.name} 👋 (eingeloggt als ${u.email})`;
+  coinsEl.textContent = u.coins ?? 0;
+
+  document.getElementById("btnLogout").addEventListener("click", (e) => {
+    e.preventDefault();
+    SpotykajAuth.logout();
+    location.href="index.html";
+  });
+
+  document.getElementById("btnAddCoin").addEventListener("click", () => {
+    const users = JSON.parse(localStorage.getItem("spotykaj_users") || "[]");
+    const idx = users.findIndex(x => x.id === u.id);
+    users[idx].coins = (users[idx].coins ?? 0) + 1;
+    localStorage.setItem("spotykaj_users", JSON.stringify(users));
+    coinsEl.textContent = users[idx].coins;
+  });
+</script>
+
+</body>
+</html>

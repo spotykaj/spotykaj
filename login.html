@@ -1,0 +1,45 @@
+<!doctype html>
+<html lang="de">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>Spotykaj – Login</title>
+  <link rel="stylesheet" href="css/style.css" />
+</head>
+<body>
+
+<header>
+  <h2><a href="index.html" style="color:white;text-decoration:none;">Spotykaj</a></h2>
+  <nav>
+    <a href="register.html">Registrieren</a>
+  </nav>
+</header>
+
+<section class="hero" style="max-width:520px;margin:0 auto;">
+  <h1 style="font-size:36px;">Login</h1>
+  <p>Demo-Login (lokal). Später ersetzen wir das durch echtes Backend.</p>
+
+  <div style="text-align:left; margin-top:24px;">
+    <label>E-Mail</label><br/>
+    <input id="email" type="email" placeholder="info@spotykaj.com" style="width:100%;padding:12px;border-radius:8px;border:0;margin:8px 0 16px 0;">
+    <label>Passwort</label><br/>
+    <input id="password" type="password" placeholder="••••••••" style="width:100%;padding:12px;border-radius:8px;border:0;margin:8px 0 16px 0;">
+    <button class="btn" id="btnLogin" style="border:0;cursor:pointer;">Einloggen</button>
+    <p id="msg" style="margin-top:14px; opacity:.9;"></p>
+  </div>
+</section>
+
+<script src="js/app.js"></script>
+<script>
+  SpotykajAuth.init();
+  document.getElementById("btnLogin").addEventListener("click", async () => {
+    const email = document.getElementById("email").value.trim();
+    const password = document.getElementById("password").value;
+    const res = SpotykajAuth.login(email, password);
+    document.getElementById("msg").textContent = res.ok ? "✅ Login ok – weiter geht’s…" : "❌ " + res.error;
+    if(res.ok) setTimeout(()=> location.href="app.html", 500);
+  });
+</script>
+
+</body>
+</html>
