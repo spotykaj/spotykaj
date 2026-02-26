@@ -1,9 +1,9 @@
 <!doctype html>
-<html lang="de">
+<html lang="pl">
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width,initial-scale=1" />
-  <title>App — Spotykaj</title>
+  <title>Aplikacja — Spotykaj</title>
   <link rel="stylesheet" href="css/style.css" />
 </head>
 <body data-requires-auth="true">
@@ -12,36 +12,37 @@
   <div class="container nav-inner">
     <a class="brand" href="index.html">spotykaj</a>
     <nav class="nav-links">
-      <button id="logoutBtn" class="btn btn-ghost">Logout</button>
+      <a class="btn btn-ghost" href="profil.html">Profil</a>
+      <button id="logoutBtn" class="btn btn-ghost">Wyloguj</button>
     </nav>
   </div>
 </header>
 
 <main class="container page">
   <div class="box">
-    <h1>Willkommen, <span id="userName">…</span> 👋</h1>
-    <p class="muted">Du bist eingeloggt. Das ist die Demo-App-Seite.</p>
+    <h1>Witaj, <span id="userName">…</span> 👋</h1>
+    <p class="muted">Jesteś zalogowany. To jest strona demo aplikacji.</p>
 
     <div class="grid2">
       <div class="card">
-        <div class="card-title">Coins (Demo)</div>
-        <div class="card-text"><span id="coins">0</span> coins</div>
-        <button id="addCoinBtn" class="btn btn-primary">+1 Coin</button>
-        <p class="small muted">Nur local gespeichert.</p>
+        <div class="card-title">Monety (Demo)</div>
+        <div class="card-text"><span id="coins">0</span> monet</div>
+        <button id="addCoinBtn" class="btn btn-primary">+1 moneta</button>
+        <p class="small muted">Zapis tylko lokalny (w przeglądarce).</p>
       </div>
 
       <div class="card">
-        <div class="card-title">Nächste Features</div>
+        <div class="card-title">Następne funkcje</div>
         <ul class="list">
-          <li>Profile erstellen (Bio, Fotos)</li>
-          <li>Like/Match-System</li>
-          <li>Chat nach Match</li>
-          <li>Paywall / Coins kaufen</li>
+          <li>Profil (bio, zdjęcia)</li>
+          <li>System polubień i matchy</li>
+          <li>Czat po matchu</li>
+          <li>Płatność / kupowanie monet</li>
         </ul>
       </div>
     </div>
 
-    <p class="small muted">Tipp: Wenn Du ausgeloggt bist, wirst Du automatisch zum Login umgeleitet.</p>
+    <p class="small muted">Wskazówka: gdy się wylogujesz, zostaniesz automatycznie przekierowany do logowania.</p>
   </div>
 </main>
 
