@@ -3,7 +3,7 @@
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width,initial-scale=1" />
-  <title>Panel — Spotykaj</title>
+  <title>Panel użytkownika — Spotykaj</title>
   <link rel="stylesheet" href="css/style.css" />
 </head>
 <body data-requires-auth="true">
@@ -12,7 +12,7 @@
   <div class="container nav-inner">
     <a class="brand" href="index.html">spotykaj</a>
     <nav class="nav-links">
-      <a class="btn btn-ghost" href="browse.html">Wyszukiwarka</a>
+      <a href="przegladaj.html" class="btn btn-ghost">Wyszukiwarka</a>
       <button id="logoutBtn" class="btn btn-ghost">Wyloguj</button>
     </nav>
   </div>
@@ -20,90 +20,71 @@
 
 <main class="container page">
   <div class="grid-account">
-    <!-- LEFT -->
+
+    <!-- SIDEBAR -->
     <aside class="account-menu">
-      <div class="menu-head">
+
+      <div class="token-box">
+        ⭐ Posiadasz <span id="tokenCount">0</span> tokenów
+      </div>
+
+      <div class="user-box">
         <div class="avatar"></div>
-        <div>
-          <div class="menu-title">Moje konto</div>
-          <div class="small muted">Zalogowano jako <b id="userName">…</b></div>
-        </div>
+        <div class="welcome">Witaj <span id="userName">…</span>.</div>
       </div>
 
-      <button class="menu-item active" data-tab="ads">Moje ogłoszenia</button>
-      <button class="menu-item" data-tab="add">Dodaj ogłoszenie</button>
-      <button class="menu-item" data-tab="settings">Ustawienia</button>
+      <nav class="menu">
+        <button class="menu-item active" data-tab="ads">
+          Moje ogłoszenia <span class="badge" id="countAds">0</span>
+        </button>
 
-      <div class="menu-foot small muted">
-        MVP demo (LocalStorage). Backend później.
-      </div>
+        <button class="menu-item" data-tab="favorites">
+          Ulubione <span class="badge" id="countFav">0</span>
+        </button>
+
+        <button class="menu-item" data-tab="offers">
+          Moje oferty <span class="badge" id="countOffers">0</span>
+        </button>
+
+        <button class="menu-item" data-tab="settings">
+          Ustawienia konta
+        </button>
+      </nav>
+
     </aside>
 
-    <!-- RIGHT -->
+    <!-- CONTENT -->
     <section class="account-content">
-      <!-- TAB: ADS -->
+
+      <!-- TAB 1 -->
       <div class="tab" id="tab-ads">
         <h1>Moje ogłoszenia</h1>
-        <p class="muted">Tutaj zobaczysz swoje ogłoszenia. Na razie demo.</p>
-
         <div id="myAds" class="cards"></div>
-
-        <div class="hr"></div>
-        <p class="small muted">W kolejnym kroku dodamy formularz „Dodaj ogłoszenie” i zapis do LocalStorage.</p>
       </div>
 
-      <!-- TAB: ADD -->
-      <div class="tab hidden" id="tab-add">
-        <h1>Dodaj ogłoszenie</h1>
-        <p class="muted">W tym kroku dodamy formularz + zapis. Teraz tylko placeholder.</p>
-
-        <div class="box">
-          <p class="small muted">Coming next: tytuł, kategoria, województwo, miasto, opis, zdjęcia.</p>
-          <a class="btn btn-primary" href="browse.html">Przejdź do wyszukiwarki</a>
-        </div>
+      <!-- TAB 2 -->
+      <div class="tab hidden" id="tab-favorites">
+        <h1>Ulubione</h1>
+        <div class="box">Brak ulubionych ogłoszeń.</div>
       </div>
 
-      <!-- TAB: SETTINGS -->
+      <!-- TAB 3 -->
+      <div class="tab hidden" id="tab-offers">
+        <h1>Moje oferty</h1>
+        <div class="box">Nie masz jeszcze ofert.</div>
+      </div>
+
+      <!-- TAB 4 -->
       <div class="tab hidden" id="tab-settings">
-        <h1>Ustawienia</h1>
-        <p class="muted">Preferencje konta (demo).</p>
-
-        <div class="box">
-          <div class="grid2">
-            <div class="card">
-              <div class="card-title">Monety (demo)</div>
-              <div class="card-text"><span id="coins">0</span> monet</div>
-              <button id="addCoinBtn" class="btn btn-primary">+1 moneta</button>
-              <p class="small muted">Zapis tylko lokalny.</p>
-            </div>
-
-            <div class="card">
-              <div class="card-title">Plan</div>
-              <ul class="list">
-                <li>Moje ogłoszenia</li>
-                <li>Dodaj / edytuj ogłoszenie</li>
-                <li>Wyszukiwarka + filtry</li>
-                <li>Monety / płatności</li>
-              </ul>
-            </div>
-          </div>
-        </div>
+        <h1>Ustawienia konta</h1>
+        <div class="box">Panel ustawień (MVP).</div>
       </div>
 
     </section>
+
   </div>
 </main>
 
 <script src="js/app.js"></script>
-<script>
-  const el = document.createElement("div");
-  el.className = "card";
-  el.style.marginTop = "16px";
-  el.innerHTML = `
-    <div class="card-title">Moje ogłoszenia (TEST)</div>
-    <div class="card-text">Jeśli to widzisz, HTML działa. Problem jest w JS/ID.</div>
-  `;
-  document.querySelector(".box")?.appendChild(el);
-</script>
 </body>
 </html>

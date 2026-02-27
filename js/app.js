@@ -1,13 +1,12 @@
-// Spotykaj MVP (client-only) — LocalStorage demo
-const LS_USERS = "spotykaj_users";
 const LS_SESSION = "spotykaj_session";
-const LS_COINS = "spotykaj_coins";
 const LS_MY_ADS = "spotykaj_my_ads";
+const LS_TOKENS = "spotykaj_tokens";
 
 function readJSON(key, fallback) {
   try { return JSON.parse(localStorage.getItem(key)) ?? fallback; }
   catch { return fallback; }
 }
+
 function writeJSON(key, value) {
   localStorage.setItem(key, JSON.stringify(value));
 }
@@ -15,11 +14,10 @@ function writeJSON(key, value) {
 function getSession() {
   return readJSON(LS_SESSION, null);
 }
+
 function requireAuth() {
-  const needs = document.body?.dataset?.requiresAuth === "true";
-  if (!needs) return;
-  const s = getSession();
-  if (!s) window.location.href = "login.html";
+  if (document.body.dataset.requiresAuth !== "true") return;
+  if (!getSession()) window.location.href = "login.html";
 }
 
 function logout() {
@@ -27,89 +25,67 @@ function logout() {
   window.location.href = "login.html";
 }
 
-function seedMyAdsIfEmpty() {
+function seedAdsIfEmpty() {
   const ads = readJSON(LS_MY_ADS, null);
   if (ads && ads.length) return;
 
   const demo = [
-    { id: "A1", title: "Ogłoszenie demo #1", status: "Aktywne", city: "Szczecin", woj: "Zachodniopomorskie" },
-    { id: "A2", title: "Ogłoszenie demo #2", status: "Wersja robocza", city: "Gdańsk", woj: "Pomorskie" },
+    { title: "Ogłoszenie demo #1", city: "Szczecin", woj: "Zachodniopomorskie" },
+    { title: "Ogłoszenie demo #2", city: "Gdańsk", woj: "Pomorskie" }
   ];
+
   writeJSON(LS_MY_ADS, demo);
 }
 
-function renderMyAds() {
+function renderAds() {
   const wrap = document.getElementById("myAds");
   if (!wrap) return;
 
   const ads = readJSON(LS_MY_ADS, []);
-  if (!ads.length) {
-    wrap.innerHTML = `<div class="card"><div class="card-title">Brak ogłoszeń</div><div class="card-text muted">Dodaj pierwsze ogłoszenie.</div></div>`;
-    return;
-  }
-
   wrap.innerHTML = ads.map(a => `
     <div class="card">
       <div class="card-title">${a.title}</div>
       <div class="card-text small muted">${a.woj} • ${a.city}</div>
-      <div class="card-text"><b>Status:</b> ${a.status}</div>
-      <div style="margin-top:10px; display:flex; gap:8px;">
-        <button class="btn btn-ghost" disabled>Edytuj</button>
-        <button class="btn btn-ghost" disabled>Usuń</button>
-      </div>
     </div>
   `).join("");
+
+  document.getElementById("countAds").textContent = ads.length;
+}
+
+function renderSidebar() {
+  const user = getSession();
+  if (user?.name) {
+    document.getElementById("userName").textContent = user.name;
+  }
+
+  const tokens = localStorage.getItem(LS_TOKENS) || "0";
+  document.getElementById("tokenCount").textContent = tokens;
 }
 
 function setupTabs() {
-  const buttons = Array.from(document.querySelectorAll(".menu-item"));
-  const tabs = {
-    ads: document.getElementById("tab-ads"),
-    add: document.getElementById("tab-add"),
-    settings: document.getElementById("tab-settings"),
-  };
-
-  function activate(name) {
-    buttons.forEach(b => b.classList.toggle("active", b.dataset.tab === name));
-    Object.entries(tabs).forEach(([k, el]) => {
-      if (!el) return;
-      el.classList.toggle("hidden", k !== name);
-    });
-  }
+  const buttons = document.querySelectorAll(".menu-item");
+  const tabs = document.querySelectorAll(".tab");
 
   buttons.forEach(btn => {
-    btn.addEventListener("click", () => activate(btn.dataset.tab));
-  });
+    btn.addEventListener("click", () => {
 
-  activate("ads");
-}
+      buttons.forEach(b => b.classList.remove("active"));
+      btn.classList.add("active");
 
-function setupCoins() {
-  const coinsEl = document.getElementById("coins");
-  const addBtn = document.getElementById("addCoinBtn");
-  if (!coinsEl || !addBtn) return;
+      tabs.forEach(t => t.classList.add("hidden"));
+      document.getElementById("tab-" + btn.dataset.tab)
+        .classList.remove("hidden");
 
-  let coins = Number(localStorage.getItem(LS_COINS) || "0");
-  coinsEl.textContent = String(coins);
-
-  addBtn.addEventListener("click", () => {
-    coins += 1;
-    localStorage.setItem(LS_COINS, String(coins));
-    coinsEl.textContent = String(coins);
+    });
   });
 }
 
 (function init(){
   requireAuth();
-
-  const s = getSession();
-  const userNameEl = document.getElementById("userName");
-  if (userNameEl && s?.name) userNameEl.textContent = s.name;
-
-  document.getElementById("logoutBtn")?.addEventListener("click", logout);
-
-  seedMyAdsIfEmpty();
+  seedAdsIfEmpty();
+  renderSidebar();
+  renderAds();
   setupTabs();
-  renderMyAds();
-  setupCoins();
+  document.getElementById("logoutBtn")
+    ?.addEventListener("click", logout);
 })();
