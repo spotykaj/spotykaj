@@ -95,5 +95,15 @@
 </main>
 
 <script src="js/app.js"></script>
+<script>
+  const el = document.createElement("div");
+  el.className = "card";
+  el.style.marginTop = "16px";
+  el.innerHTML = `
+    <div class="card-title">Moje ogłoszenia (TEST)</div>
+    <div class="card-text">Jeśli to widzisz, HTML działa. Problem jest w JS/ID.</div>
+  `;
+  document.querySelector(".box")?.appendChild(el);
+</script>
 </body>
 </html>
