@@ -1,142 +1,115 @@
-// Spotykaj MVP Auth Demo (Client-only)
-// Speichert User + Session im localStorage.
-// NICHT für Produktion. Später ersetzen wir das durch echtes Backend (z.B. Supabase).
-
+// Spotykaj MVP (client-only) — LocalStorage demo
 const LS_USERS = "spotykaj_users";
 const LS_SESSION = "spotykaj_session";
+const LS_COINS = "spotykaj_coins";
+const LS_MY_ADS = "spotykaj_my_ads";
 
-function loadUsers() {
-  try { return JSON.parse(localStorage.getItem(LS_USERS) || "[]"); }
-  catch { return []; }
+function readJSON(key, fallback) {
+  try { return JSON.parse(localStorage.getItem(key)) ?? fallback; }
+  catch { return fallback; }
 }
-function saveUsers(users) {
-  localStorage.setItem(LS_USERS, JSON.stringify(users));
+function writeJSON(key, value) {
+  localStorage.setItem(key, JSON.stringify(value));
 }
+
 function getSession() {
-  try { return JSON.parse(localStorage.getItem(LS_SESSION) || "null"); }
-  catch { return null; }
-}
-function setSession(session) {
-  localStorage.setItem(LS_SESSION, JSON.stringify(session));
-}
-function clearSession() {
-  localStorage.removeItem(LS_SESSION);
-}
-
-function byId(id) { return document.getElementById(id); }
-
-function redirectIfAuth() {
-  const s = getSession();
-  if (s?.user?.email) window.location.href = "app.html";
+  return readJSON(LS_SESSION, null);
 }
 function requireAuth() {
+  const needs = document.body?.dataset?.requiresAuth === "true";
+  if (!needs) return;
   const s = getSession();
-  if (!s?.user?.email) window.location.href = "login.html";
+  if (!s) window.location.href = "login.html";
 }
 
-function showMsg(text, ok = false) {
-  const el = byId("msg");
-  if (!el) return;
-  el.textContent = text;
-  el.className = "msg " + (ok ? "ok" : "err");
+function logout() {
+  localStorage.removeItem(LS_SESSION);
+  window.location.href = "login.html";
 }
 
-function hashLike(pw) {
-  // Mini-Hash für Demo (kein Security!). Nur damit nicht klartext.
-  let h = 0;
-  for (let i = 0; i < pw.length; i++) h = (h * 31 + pw.charCodeAt(i)) >>> 0;
-  return String(h);
+function seedMyAdsIfEmpty() {
+  const ads = readJSON(LS_MY_ADS, null);
+  if (ads && ads.length) return;
+
+  const demo = [
+    { id: "A1", title: "Ogłoszenie demo #1", status: "Aktywne", city: "Szczecin", woj: "Zachodniopomorskie" },
+    { id: "A2", title: "Ogłoszenie demo #2", status: "Wersja robocza", city: "Gdańsk", woj: "Pomorskie" },
+  ];
+  writeJSON(LS_MY_ADS, demo);
 }
 
-// --- Bootstrapping je Seite ---
-document.addEventListener("DOMContentLoaded", () => {
-  const body = document.body;
+function renderMyAds() {
+  const wrap = document.getElementById("myAds");
+  if (!wrap) return;
 
-  if (body.dataset.redirectIfAuth === "true") redirectIfAuth();
-  if (body.dataset.requiresAuth === "true") requireAuth();
+  const ads = readJSON(LS_MY_ADS, []);
+  if (!ads.length) {
+    wrap.innerHTML = `<div class="card"><div class="card-title">Brak ogłoszeń</div><div class="card-text muted">Dodaj pierwsze ogłoszenie.</div></div>`;
+    return;
+  }
 
-  const loginForm = byId("loginForm");
-  const registerForm = byId("registerForm");
+  wrap.innerHTML = ads.map(a => `
+    <div class="card">
+      <div class="card-title">${a.title}</div>
+      <div class="card-text small muted">${a.woj} • ${a.city}</div>
+      <div class="card-text"><b>Status:</b> ${a.status}</div>
+      <div style="margin-top:10px; display:flex; gap:8px;">
+        <button class="btn btn-ghost" disabled>Edytuj</button>
+        <button class="btn btn-ghost" disabled>Usuń</button>
+      </div>
+    </div>
+  `).join("");
+}
 
-  if (registerForm) {
-    registerForm.addEventListener("submit", (e) => {
-      e.preventDefault();
-      const name = byId("name").value.trim();
-      const email = byId("email").value.trim().toLowerCase();
-      const password = byId("password").value;
+function setupTabs() {
+  const buttons = Array.from(document.querySelectorAll(".menu-item"));
+  const tabs = {
+    ads: document.getElementById("tab-ads"),
+    add: document.getElementById("tab-add"),
+    settings: document.getElementById("tab-settings"),
+  };
 
-      if (!name || !email || !password) return showMsg("Bitte alle Felder ausfüllen.");
-
-      const users = loadUsers();
-      if (users.some(u => u.email === email)) return showMsg("Diese E-Mail ist schon registriert.");
-
-      const user = {
-        id: crypto.randomUUID ? crypto.randomUUID() : String(Date.now()),
-        name,
-        email,
-        pw: hashLike(password),
-        coins: 0,
-        createdAt: new Date().toISOString()
-      };
-
-      users.push(user);
-      saveUsers(users);
-
-      setSession({ user: { id: user.id, name: user.name, email: user.email } });
-      showMsg("Account erstellt. Weiterleitung…", true);
-      setTimeout(() => (window.location.href = "app.html"), 600);
+  function activate(name) {
+    buttons.forEach(b => b.classList.toggle("active", b.dataset.tab === name));
+    Object.entries(tabs).forEach(([k, el]) => {
+      if (!el) return;
+      el.classList.toggle("hidden", k !== name);
     });
   }
 
-  if (loginForm) {
-    loginForm.addEventListener("submit", (e) => {
-      e.preventDefault();
-      const email = byId("email").value.trim().toLowerCase();
-      const password = byId("password").value;
+  buttons.forEach(btn => {
+    btn.addEventListener("click", () => activate(btn.dataset.tab));
+  });
 
-      const users = loadUsers();
-      const user = users.find(u => u.email === email);
+  activate("ads");
+}
 
-      if (!user) return showMsg("User nicht gefunden.");
-      if (user.pw !== hashLike(password)) return showMsg("Passwort falsch.");
+function setupCoins() {
+  const coinsEl = document.getElementById("coins");
+  const addBtn = document.getElementById("addCoinBtn");
+  if (!coinsEl || !addBtn) return;
 
-      setSession({ user: { id: user.id, name: user.name, email: user.email } });
-      showMsg("Login OK. Weiterleitung…", true);
-      setTimeout(() => (window.location.href = "app.html"), 400);
-    });
-  }
+  let coins = Number(localStorage.getItem(LS_COINS) || "0");
+  coinsEl.textContent = String(coins);
 
-  // App-Seite
-  const logoutBtn = byId("logoutBtn");
-  if (logoutBtn) {
-    logoutBtn.addEventListener("click", () => {
-      clearSession();
-      window.location.href = "login.html";
-    });
-  }
+  addBtn.addEventListener("click", () => {
+    coins += 1;
+    localStorage.setItem(LS_COINS, String(coins));
+    coinsEl.textContent = String(coins);
+  });
+}
 
-  const userName = byId("userName");
-  if (userName) {
-    const s = getSession();
-    userName.textContent = s?.user?.name || "User";
-  }
+(function init(){
+  requireAuth();
 
-  const coinsEl = byId("coins");
-  const addCoinBtn = byId("addCoinBtn");
-  if (coinsEl && addCoinBtn) {
-    const s = getSession();
-    const users = loadUsers();
-    const idx = users.findIndex(u => u.id === s?.user?.id);
-    if (idx >= 0) coinsEl.textContent = String(users[idx].coins || 0);
+  const s = getSession();
+  const userNameEl = document.getElementById("userName");
+  if (userNameEl && s?.name) userNameEl.textContent = s.name;
 
-    addCoinBtn.addEventListener("click", () => {
-      const s2 = getSession();
-      const users2 = loadUsers();
-      const i2 = users2.findIndex(u => u.id === s2?.user?.id);
-      if (i2 < 0) return;
-      users2[i2].coins = (users2[i2].coins || 0) + 1;
-      saveUsers(users2);
-      coinsEl.textContent = String(users2[i2].coins);
-    });
-  }
-});
+  document.getElementById("logoutBtn")?.addEventListener("click", logout);
+
+  seedMyAdsIfEmpty();
+  setupTabs();
+  renderMyAds();
+  setupCoins();
+})();

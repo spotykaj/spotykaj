@@ -3,7 +3,7 @@
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width,initial-scale=1" />
-  <title>Aplikacja — Spotykaj</title>
+  <title>Panel — Spotykaj</title>
   <link rel="stylesheet" href="css/style.css" />
 </head>
 <body data-requires-auth="true">
@@ -12,37 +12,85 @@
   <div class="container nav-inner">
     <a class="brand" href="index.html">spotykaj</a>
     <nav class="nav-links">
-      <a class="btn btn-ghost" href="profil.html">Profil</a>
+      <a class="btn btn-ghost" href="browse.html">Wyszukiwarka</a>
       <button id="logoutBtn" class="btn btn-ghost">Wyloguj</button>
     </nav>
   </div>
 </header>
 
 <main class="container page">
-  <div class="box">
-    <h1>Witaj, <span id="userName">…</span> 👋</h1>
-    <p class="muted">Jesteś zalogowany. To jest strona demo aplikacji.</p>
-
-    <div class="grid2">
-      <div class="card">
-        <div class="card-title">Monety (Demo)</div>
-        <div class="card-text"><span id="coins">0</span> monet</div>
-        <button id="addCoinBtn" class="btn btn-primary">+1 moneta</button>
-        <p class="small muted">Zapis tylko lokalny (w przeglądarce).</p>
+  <div class="grid-account">
+    <!-- LEFT -->
+    <aside class="account-menu">
+      <div class="menu-head">
+        <div class="avatar"></div>
+        <div>
+          <div class="menu-title">Moje konto</div>
+          <div class="small muted">Zalogowano jako <b id="userName">…</b></div>
+        </div>
       </div>
 
-      <div class="card">
-        <div class="card-title">Następne funkcje</div>
-        <ul class="list">
-          <li>Profil (bio, zdjęcia)</li>
-          <li>System polubień i matchy</li>
-          <li>Czat po matchu</li>
-          <li>Płatność / kupowanie monet</li>
-        </ul>
-      </div>
-    </div>
+      <button class="menu-item active" data-tab="ads">Moje ogłoszenia</button>
+      <button class="menu-item" data-tab="add">Dodaj ogłoszenie</button>
+      <button class="menu-item" data-tab="settings">Ustawienia</button>
 
-    <p class="small muted">Wskazówka: gdy się wylogujesz, zostaniesz automatycznie przekierowany do logowania.</p>
+      <div class="menu-foot small muted">
+        MVP demo (LocalStorage). Backend później.
+      </div>
+    </aside>
+
+    <!-- RIGHT -->
+    <section class="account-content">
+      <!-- TAB: ADS -->
+      <div class="tab" id="tab-ads">
+        <h1>Moje ogłoszenia</h1>
+        <p class="muted">Tutaj zobaczysz swoje ogłoszenia. Na razie demo.</p>
+
+        <div id="myAds" class="cards"></div>
+
+        <div class="hr"></div>
+        <p class="small muted">W kolejnym kroku dodamy formularz „Dodaj ogłoszenie” i zapis do LocalStorage.</p>
+      </div>
+
+      <!-- TAB: ADD -->
+      <div class="tab hidden" id="tab-add">
+        <h1>Dodaj ogłoszenie</h1>
+        <p class="muted">W tym kroku dodamy formularz + zapis. Teraz tylko placeholder.</p>
+
+        <div class="box">
+          <p class="small muted">Coming next: tytuł, kategoria, województwo, miasto, opis, zdjęcia.</p>
+          <a class="btn btn-primary" href="browse.html">Przejdź do wyszukiwarki</a>
+        </div>
+      </div>
+
+      <!-- TAB: SETTINGS -->
+      <div class="tab hidden" id="tab-settings">
+        <h1>Ustawienia</h1>
+        <p class="muted">Preferencje konta (demo).</p>
+
+        <div class="box">
+          <div class="grid2">
+            <div class="card">
+              <div class="card-title">Monety (demo)</div>
+              <div class="card-text"><span id="coins">0</span> monet</div>
+              <button id="addCoinBtn" class="btn btn-primary">+1 moneta</button>
+              <p class="small muted">Zapis tylko lokalny.</p>
+            </div>
+
+            <div class="card">
+              <div class="card-title">Plan</div>
+              <ul class="list">
+                <li>Moje ogłoszenia</li>
+                <li>Dodaj / edytuj ogłoszenie</li>
+                <li>Wyszukiwarka + filtry</li>
+                <li>Monety / płatności</li>
+              </ul>
+            </div>
+          </div>
+        </div>
+      </div>
+
+    </section>
   </div>
 </main>
 
