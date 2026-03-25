@@ -13,11 +13,11 @@ function renderAds(list) {
     return;
   }
 
-  wrap.innerHTML = list.map(a => `
+ wrap.innerHTML = list.map(a => `
   <div class="card">
 
     <div class="card-text small muted">
-      ${a.woj} • ${a.city}
+      ${a.category || "Bez kategorii"} • ${a.woj} • ${a.city}
     </div>
 
     <div class="card-title">
@@ -29,17 +29,13 @@ function renderAds(list) {
     </div>
 
     <div class="card-actions" style="margin-top:10px; display:flex; gap:10px;">
-
-      <!-- DETAIL BUTTON -->
       <a href="ogloszenie.html?id=${a.id}" class="btn btn-ghost">
         Podgląd
       </a>
 
-      <!-- SPÄTER: Anfrage -->
       <button class="btn btn-primary">
         Wyślij zapytanie
       </button>
-
     </div>
 
   </div>
