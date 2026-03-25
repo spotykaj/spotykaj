@@ -31,11 +31,16 @@
       <div class="user-box">
         <div class="avatar"></div>
         <div class="welcome">Witaj <span id="userName">…</span>.</div>
+        <div class="small muted">MVP demo (LocalStorage). Backend później.</div>
       </div>
 
       <nav class="menu">
         <button class="menu-item active" data-tab="ads">
           Moje ogłoszenia <span class="badge" id="countAds">0</span>
+        </button>
+
+        <button class="menu-item" data-tab="add">
+          Dodaj ogłoszenie
         </button>
 
         <button class="menu-item" data-tab="favorites">
@@ -56,25 +61,114 @@
     <!-- CONTENT -->
     <section class="account-content">
 
-      <!-- TAB 1 -->
+      <!-- TAB: ADS -->
       <div class="tab" id="tab-ads">
         <h1>Moje ogłoszenia</h1>
+        <p class="muted">Tutaj zobaczysz swoje ogłoszenia. Na razie MVP.</p>
         <div id="myAds" class="cards"></div>
       </div>
 
-      <!-- TAB 2 -->
+      <!-- TAB: ADD -->
+      <div class="tab hidden" id="tab-add">
+        <h1>Dodaj ogłoszenie</h1>
+        <p class="muted">Wypełnij podstawowe informacje. Zapis lokalny (LocalStorage).</p>
+
+        <form id="addAdForm" class="box form">
+          <div class="grid2">
+            <label class="field">
+              <span>Tytuł ogłoszenia</span>
+              <input id="adTitle" type="text" placeholder="Np. Hydraulik 24/7, Montaż mebli, Korepetycje…" required />
+            </label>
+
+            <label class="field">
+              <span>Kategoria</span>
+              <select id="adCategory" required>
+                <option value="" selected disabled>Wybierz…</option>
+                <option>Budowlane</option>
+                <option>Motoryzacja</option>
+                <option>IT / Online</option>
+                <option>Dom i ogród</option>
+                <option>Transport</option>
+                <option>Zdrowie</option>
+                <option>Inne</option>
+              </select>
+            </label>
+          </div>
+
+          <div class="grid2">
+            <label class="field">
+              <span>Województwo</span>
+              <select id="adWoj" required>
+                <option value="" selected disabled>Wybierz…</option>
+                <option>Zachodniopomorskie</option>
+                <option>Pomorskie</option>
+                <option>Kujawsko-pomorskie</option>
+                <option>Wielkopolskie</option>
+                <option>Mazowieckie</option>
+                <option>Dolnośląskie</option>
+                <option>Śląskie</option>
+                <option>Małopolskie</option>
+                <option>Łódzkie</option>
+                <option>Lubelskie</option>
+                <option>Podlaskie</option>
+                <option>Podkarpackie</option>
+                <option>Świętokrzyskie</option>
+                <option>Warmińsko-mazurskie</option>
+                <option>Opolskie</option>
+                <option>Lubuskie</option>
+              </select>
+            </label>
+
+            <label class="field">
+              <span>Miasto</span>
+              <input id="adCity" type="text" placeholder="Np. Szczecin" required />
+            </label>
+          </div>
+
+          <label class="field">
+            <span>Opis</span>
+            <textarea id="adDesc" rows="5" placeholder="Krótko: co robisz, cena / widełki, terminy, doświadczenie…"></textarea>
+          </label>
+
+          <div class="grid2">
+            <label class="field">
+              <span>Telefon (opcjonalnie)</span>
+              <input id="adPhone" type="tel" placeholder="+48…" />
+            </label>
+
+            <label class="field">
+              <span>Typ konta</span>
+              <select id="adAccountType" required>
+                <option>Osoba prywatna</option>
+                <option>Firma</option>
+              </select>
+            </label>
+          </div>
+
+          <div class="actions">
+            <button class="btn btn-primary" type="submit">Zapisz ogłoszenie</button>
+            <button class="btn btn-ghost" type="button" id="clearFormBtn">Wyczyść</button>
+          </div>
+
+          <p class="small muted">
+            MVP: zapisuje lokalnie w przeglądarce. Później: konto firmowe, weryfikacja, płatności, moderacja.
+          </p>
+        </form>
+      </div>
+
+      <!-- TAB: FAVORITES -->
       <div class="tab hidden" id="tab-favorites">
         <h1>Ulubione</h1>
         <div class="box">Brak ulubionych ogłoszeń.</div>
       </div>
 
-      <!-- TAB 3 -->
+      <!-- TAB: OFFERS -->
       <div class="tab hidden" id="tab-offers">
         <h1>Moje oferty</h1>
-        <div class="box">Nie masz jeszcze ofert.</div>
+        <div class="box">Ten moduł dopracujemy później (np. oferty pakietów firmowych).</div>
       </div>
 
-      <!-- TAB 4 -->
+      <!-- TAB: SETTINGS -->
       <div class="tab hidden" id="tab-settings">
         <h1>Ustawienia konta</h1>
         <div class="box">Panel ustawień (MVP).</div>
