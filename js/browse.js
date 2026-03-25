@@ -14,15 +14,35 @@ function renderAds(list) {
   }
 
   wrap.innerHTML = list.map(a => `
-  <a class="card" href="ogloszenie.html?id=${a.id}" style="display:block;text-decoration:none;color:inherit;">
-    <div class="card-title">${a.title}</div>
+  <div class="card">
+
     <div class="card-text small muted">
-      ${a.category} • ${a.woj} • ${a.city}
+      ${a.woj} • ${a.city}
     </div>
+
+    <div class="card-title">
+      ${a.title}
+    </div>
+
     <div class="card-text small">
       ${a.desc || ""}
     </div>
-  </a>
+
+    <div class="card-actions" style="margin-top:10px; display:flex; gap:10px;">
+
+      <!-- DETAIL BUTTON -->
+      <a href="ogloszenie.html?id=${a.id}" class="btn btn-ghost">
+        Podgląd
+      </a>
+
+      <!-- SPÄTER: Anfrage -->
+      <button class="btn btn-primary">
+        Wyślij zapytanie
+      </button>
+
+    </div>
+
+  </div>
 `).join("");
 }
 
