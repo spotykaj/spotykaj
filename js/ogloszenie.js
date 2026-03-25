@@ -23,7 +23,7 @@ function renderAd() {
 
   wrap.innerHTML = `
     <h1>${ad.title}</h1>
-    <p class="muted">${ad.category} • ${ad.woj} • ${ad.city}</p>
+    <p class="muted">${ad.category || "Bez kategorii"} • ${ad.woj} • ${ad.city}</p>
 
     <div class="grid2" style="margin-top:20px;">
       <div class="card">
