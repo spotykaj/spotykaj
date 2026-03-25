@@ -14,16 +14,16 @@ function renderAds(list) {
   }
 
   wrap.innerHTML = list.map(a => `
-    <div class="card">
-      <div class="card-title">${a.title}</div>
-      <div class="card-text small muted">
-        ${a.category} • ${a.woj} • ${a.city}
-      </div>
-      <div class="card-text small">
-        ${a.desc || ""}
-      </div>
+  <a class="card" href="ogloszenie.html?id=${a.id}" style="display:block;text-decoration:none;color:inherit;">
+    <div class="card-title">${a.title}</div>
+    <div class="card-text small muted">
+      ${a.category} • ${a.woj} • ${a.city}
     </div>
-  `).join("");
+    <div class="card-text small">
+      ${a.desc || ""}
+    </div>
+  </a>
+`).join("");
 }
 
 function search() {
