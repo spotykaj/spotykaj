@@ -1,0 +1,27 @@
+<%- include('../partials/header') %>
+<section class="section compact listing-edit-page">
+  <div class="section-head">
+    <div>
+      <p class="eyebrow">Moje ogłoszenia</p>
+      <h1>Edycja ogłoszenia</h1>
+      <p class="muted"><%= listing.title %></p>
+    </div>
+    <a class="button small-button" href="/panel">Wróć do panelu</a>
+  </div>
+
+  <article class="listing-edit-card">
+    <img src="<%= listing.cover || '/uploads/demo-market.svg' %>" alt="<%= listing.title %>" loading="lazy" decoding="async">
+    <div>
+      <div class="badge-row">
+        <span class="pill"><%= listing.status === 'approved' || listing.status === 'active' ? 'Zatwierdzone' : (listing.status === 'pending' ? 'Oczekuje na moderację' : (listing.status === 'rejected' ? 'Odrzucone' : 'Ukryte')) %></span>
+        <% if (listing.is_promoted) { %><span class="pill promoted">Promowane</span><% } %>
+      </div>
+      <h2><%= listing.title %></h2>
+      <p><%= listing.city %>, <%= listing.region %></p>
+      <p><strong><%= Number(listing.price || 0).toLocaleString('pl-PL') %> zł</strong></p>
+      <%- include('../partials/promotionModal', { listing, promotionOptions, returnTo: `/ogloszenia/${listing.id}/edytuj` }) %>
+    </div>
+  </article>
+</section>
+<%- include('../partials/promotionModalScript') %>
+<%- include('../partials/footer') %>

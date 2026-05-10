@@ -1,0 +1,38 @@
+<%- include('../partials/header') %>
+<section class="user-dashboard-shell">
+  <%- include('../partials/userPanelSidebar', { activePanel }) %>
+
+  <div class="user-dashboard-content">
+    <header class="dashboard-welcome-card">
+      <div>
+        <p class="eyebrow">Finanse</p>
+        <h1>Historia Spotycoinów</h1>
+        <p>Pełna historia operacji w księdze Spotycoin.</p>
+      </div>
+      <a class="button" href="/kup-spotycoiny">Kup Spotycoiny</a>
+    </header>
+
+    <section class="dashboard-panel-card">
+      <div class="history-card-list">
+        <% transactions.forEach((transaction) => { %>
+          <article class="history-card">
+            <div>
+              <strong><%= Number(transaction.amount) > 0 ? '+' : '' %><%= Number(transaction.amount).toLocaleString('pl-PL') %> Spotycoin</strong>
+              <span><%= transaction.transaction_type || 'adjustment' %></span>
+            </div>
+            <dl>
+              <div><dt>Data</dt><dd><%= new Date(transaction.created_at).toLocaleString('pl-PL') %></dd></div>
+              <div><dt>Saldo przed</dt><dd><%= Number(transaction.balance_before || 0).toLocaleString('pl-PL') %></dd></div>
+              <div><dt>Saldo po</dt><dd><%= Number(transaction.balance_after || 0).toLocaleString('pl-PL') %></dd></div>
+              <div><dt>Referencja</dt><dd><%= transaction.reference_type || '-' %><%= transaction.reference_id ? ` #${transaction.reference_id}` : '' %></dd></div>
+              <div><dt>Opis</dt><dd><%= transaction.note || '-' %></dd></div>
+              <div><dt>Hash</dt><dd><%= transaction.hash ? transaction.hash.slice(0, 12) + '...' : '-' %></dd></div>
+            </dl>
+          </article>
+        <% }) %>
+      </div>
+      <% if (!transactions.length) { %><div class="empty">Brak historii Spotycoin.</div><% } %>
+    </section>
+  </div>
+</section>
+<%- include('../partials/footer') %>

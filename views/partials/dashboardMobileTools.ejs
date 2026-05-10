@@ -1,0 +1,44 @@
+<script>
+  (() => {
+    const dashboard = document.querySelector('[data-mobile-dashboard]');
+    if (!dashboard) return;
+    if (!window.matchMedia('(max-width: 767px)').matches) return;
+
+    dashboard.querySelectorAll('.table-wrap table').forEach((table) => {
+      const labels = Array.from(table.querySelectorAll('thead th')).map((th) => th.textContent.trim());
+      table.querySelectorAll('tbody tr').forEach((row) => {
+        Array.from(row.children).forEach((cell, index) => {
+          if (!cell.dataset.label && labels[index]) cell.dataset.label = labels[index];
+        });
+      });
+    });
+
+    dashboard.querySelectorAll('[data-mobile-section]').forEach((section, index) => {
+      const heading = section.querySelector('h2');
+      if (!heading || heading.dataset.mobileReady) return;
+      heading.dataset.mobileReady = 'true';
+      const title = section.dataset.mobileTitle || heading.textContent.trim();
+      const count = section.dataset.mobileCount || '0';
+      const storageKey = `${location.pathname}:mobile-section:${title}`;
+      const stored = sessionStorage.getItem(storageKey);
+      const defaultOpen = section.dataset.mobileOpen === 'true' || index < 2;
+      const open = stored === null ? defaultOpen : stored === 'true';
+
+      const button = document.createElement('button');
+      button.type = 'button';
+      button.className = 'mobile-section-toggle';
+      button.setAttribute('aria-expanded', String(open));
+      button.innerHTML = `<span>${title}</span><strong>${count}</strong>`;
+      heading.textContent = '';
+      heading.appendChild(button);
+      section.classList.toggle('is-collapsed', !open);
+
+      button.addEventListener('click', () => {
+        const nextOpen = section.classList.contains('is-collapsed');
+        section.classList.toggle('is-collapsed', !nextOpen);
+        button.setAttribute('aria-expanded', String(nextOpen));
+        sessionStorage.setItem(storageKey, String(nextOpen));
+      });
+    });
+  })();
+</script>

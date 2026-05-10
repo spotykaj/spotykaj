@@ -1,0 +1,36 @@
+<%- include('../partials/header') %>
+<section class="user-dashboard-shell">
+  <%- include('../partials/userPanelSidebar', { activePanel }) %>
+
+  <div class="user-dashboard-content">
+    <header class="dashboard-welcome-card">
+      <div>
+        <p class="eyebrow">Napiwki</p>
+        <h1>Historia napiwków</h1>
+        <p>Wysłane i otrzymane napiwki przy ogłoszeniach.</p>
+      </div>
+    </header>
+
+    <section class="dashboard-panel-card">
+      <div class="history-card-list">
+        <% tips.forEach((tip) => { %>
+          <% const incoming = Number(tip.receiver_id) === Number(user.id); %>
+          <article class="history-card">
+            <div>
+              <strong><%= incoming ? 'Otrzymano' : 'Wysłano' %>: <%= Number(tip.amount).toLocaleString('pl-PL') %> Spotycoin</strong>
+              <span><%= new Date(tip.created_at).toLocaleString('pl-PL') %></span>
+            </div>
+            <dl>
+              <div><dt>Ogłoszenie</dt><dd><a href="/ogloszenia/<%= tip.listing_id %>"><%= tip.listing_title || 'Ogłoszenie' %></a></dd></div>
+              <div><dt>Od</dt><dd><%= tip.sender_name %></dd></div>
+              <div><dt>Dla</dt><dd><%= tip.receiver_name %></dd></div>
+              <div><dt>Notatka</dt><dd><%= tip.note || '-' %></dd></div>
+            </dl>
+          </article>
+        <% }) %>
+      </div>
+      <% if (!tips.length) { %><div class="empty">Brak historii napiwków.</div><% } %>
+    </section>
+  </div>
+</section>
+<%- include('../partials/footer') %>

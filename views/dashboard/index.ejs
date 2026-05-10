@@ -1,0 +1,176 @@
+<%- include('../partials/header') %>
+<%
+  const verified = Number(user.profile_verified || 0) === 1;
+  const activeListings = listings.filter((listing) => listing.status === 'approved' || listing.status === 'active').length;
+  const latestMessages = [...inboxMessages].slice(0, 4);
+  const listingPreview = listings.slice(0, 6);
+  const recentTransactions = transactions.slice(0, 6);
+  const verificationStatus = verified
+    ? 'approved'
+    : (verificationRequest && verificationRequest.status === 'pending' ? 'pending' : (verificationRequest && verificationRequest.status === 'rejected' ? 'rejected' : 'none'));
+  const verificationCardTitle = verificationStatus === 'approved'
+    ? 'Konto zweryfikowane'
+    : (verificationStatus === 'pending' ? 'Weryfikacja w toku' : 'Niezweryfikowane');
+  const verificationCardText = verificationStatus === 'approved'
+    ? 'Profil z odznaką zaufania'
+    : (verificationStatus === 'pending' ? 'Administrator sprawdza dokumenty' : 'Weryfikacja oczekuje na zgłoszenie');
+%>
+<section class="user-dashboard-shell">
+  <%- include('../partials/userPanelSidebar', { activePanel }) %>
+
+  <div class="user-dashboard-content">
+    <header class="dashboard-welcome-card" id="moj-profil">
+      <div>
+        <p class="eyebrow">Panel użytkownika</p>
+        <h1>Witaj, <%= user.name %></h1>
+        <p><%= user.email %></p>
+      </div>
+      <a class="button" href="/ogloszenia/nowe">Dodaj ogłoszenie</a>
+    </header>
+
+    <% if (verificationStatus === 'none' || verificationStatus === 'rejected') { %>
+      <div class="verification-banner">
+        <div>
+          <strong>Zweryfikuj konto aby zwiększyć zaufanie użytkowników</strong>
+          <span><%= verificationStatus === 'rejected' ? 'Poprzedni wniosek został odrzucony. Możesz wysłać dokumenty ponownie.' : 'Weryfikacja pomaga wyróżnić profil i zwiększa wiarygodność ogłoszeń.' %></span>
+        </div>
+        <a class="button" href="/panel/weryfikacja">Przejdź do weryfikacji</a>
+      </div>
+    <% } else if (verificationStatus === 'pending') { %>
+      <div class="verification-banner is-pending">
+        <div>
+          <strong>Weryfikacja w trakcie sprawdzania</strong>
+          <span>Administrator sprawdza przesłane dokumenty.</span>
+        </div>
+        <a class="ghost button-like" href="/panel/weryfikacja">Zobacz status</a>
+      </div>
+    <% } else if (verificationStatus === 'approved') { %>
+      <div class="verification-banner is-success">
+        <div>
+          <strong>Konto zweryfikowane</strong>
+          <span>Twój profil ma aktywną odznakę zaufania.</span>
+        </div>
+      </div>
+    <% } %>
+
+    <section class="dashboard-stat-grid" aria-label="Statystyki konta">
+      <article class="dashboard-stat-card">
+        <span>Spotycoiny</span>
+        <strong><%= Number(user.coins || 0).toLocaleString('pl-PL') %></strong>
+        <a href="/kup-spotycoiny">Doładuj saldo</a>
+      </article>
+      <article class="dashboard-stat-card">
+        <span>Moje ogłoszenia</span>
+        <strong><%= listings.length.toLocaleString('pl-PL') %></strong>
+        <small>Aktywne: <%= activeListings.toLocaleString('pl-PL') %></small>
+      </article>
+      <article class="dashboard-stat-card">
+        <span>Status konta</span>
+        <strong><%= verificationCardTitle %></strong>
+        <small><%= verificationCardText %></small>
+      </article>
+    </section>
+
+    <section class="dashboard-main-grid">
+      <article class="dashboard-panel-card dashboard-listings-preview">
+        <div class="dashboard-card-head">
+          <div>
+            <p class="eyebrow">Ogłoszenia</p>
+            <h2>Moje ogłoszenia</h2>
+          </div>
+          <a class="ghost button-like" href="/ogloszenia/nowe">Dodaj</a>
+        </div>
+        <div class="dashboard-listing-list">
+          <% listingPreview.forEach((listing) => { %>
+            <div class="dashboard-listing-item">
+              <img src="<%= listing.cover || '/uploads/demo-market.svg' %>" alt="<%= listing.title %>" loading="lazy" decoding="async">
+              <div>
+                <div class="badge-row">
+                  <span class="pill"><%= listing.status === 'approved' || listing.status === 'active' ? 'Zatwierdzone' : (listing.status === 'pending' ? 'Oczekuje' : (listing.status === 'rejected' ? 'Odrzucone' : 'Ukryte')) %></span>
+                  <% if (listing.is_promoted) { %><span class="pill promoted">Promowane</span><% } %>
+                </div>
+                <h3><a href="/ogloszenia/<%= listing.id %>"><%= listing.title %></a></h3>
+                <p><%= listing.city %>, <%= listing.region %></p>
+                <% if (listing.is_promoted) { %>
+                  <p>Promowane do: <%= listing.promotion_expires_text %> · Pozostało: <%= listing.promotion_remaining_text %></p>
+                <% } else { %>
+                  <p>Promowanie nieaktywne</p>
+                <% } %>
+                <div class="dashboard-inline-actions">
+                  <a class="ghost button-like" href="/ogloszenia/<%= listing.id %>/edytuj">Edytuj</a>
+                  <%- include('../partials/promotionModal', { listing, promotionOptions, returnTo: '/panel' }) %>
+                  <form action="/ogloszenia/<%= listing.id %>?_method=DELETE" method="post" onsubmit="return confirm('Czy na pewno chcesz usunąć ogłoszenie?');">
+                    <button class="danger" type="submit">Usuń ogłoszenie</button>
+                  </form>
+                </div>
+              </div>
+            </div>
+          <% }) %>
+        </div>
+        <% if (listingPreview.length === 0) { %><div class="empty">Nie masz jeszcze ogłoszeń.</div><% } %>
+      </article>
+
+      <article class="dashboard-panel-card" id="wiadomosci">
+        <div class="dashboard-card-head">
+          <div>
+            <p class="eyebrow">Kontakt</p>
+            <h2>Ostatnie wiadomości</h2>
+          </div>
+        </div>
+        <div class="dashboard-message-list">
+          <% latestMessages.forEach((item) => { %>
+            <a href="/panel/messages/<%= item.id %>" class="dashboard-message-item <%= Number(item.is_read) ? '' : 'is-unread' %>">
+              <strong><%= item.sender_name %></strong>
+              <span><%= item.listing_title %></span>
+              <small><%= new Date(item.created_at).toLocaleString('pl-PL') %></small>
+            </a>
+          <% }) %>
+        </div>
+        <% if (latestMessages.length === 0) { %><div class="empty">Brak odebranych wiadomości.</div><% } %>
+      </article>
+
+      <article class="dashboard-panel-card quick-actions-card">
+        <div class="dashboard-card-head">
+          <div>
+            <p class="eyebrow">Szybkie akcje</p>
+            <h2>Co dalej?</h2>
+          </div>
+        </div>
+        <a class="button" href="/ogloszenia/nowe">Dodaj ogłoszenie</a>
+        <a class="ghost button-like" href="/kup-spotycoiny">Kup Spotycoiny</a>
+        <a class="ghost button-like" href="/panel/weryfikacja">Weryfikacja konta</a>
+      </article>
+    </section>
+
+    <section class="dashboard-panel-card" id="historia-spotycoin">
+      <div class="dashboard-card-head">
+        <div>
+          <p class="eyebrow">Finanse</p>
+          <h2>Historia Spotycoinów</h2>
+        </div>
+      </div>
+      <div class="dashboard-history-list">
+        <% recentTransactions.forEach((transaction) => { %>
+          <div>
+            <strong><%= Number(transaction.amount) > 0 ? '+' : '' %><%= Number(transaction.amount).toLocaleString('pl-PL') %> Spotycoin</strong>
+            <span><%= transaction.transaction_type || 'adjustment' %> · <%= new Date(transaction.created_at).toLocaleString('pl-PL') %></span>
+          </div>
+        <% }) %>
+      </div>
+      <% if (recentTransactions.length === 0) { %><div class="empty">Brak historii Spotycoin.</div><% } %>
+      <a class="ghost button-like" href="/panel/spotycoins/history">Pokaż całą historię</a>
+    </section>
+
+    <section class="dashboard-panel-card" id="historia-napiwkow">
+      <div class="dashboard-card-head">
+        <div>
+          <p class="eyebrow">Napiwki</p>
+          <h2>Historia napiwków</h2>
+        </div>
+      </div>
+      <a class="ghost button-like" href="/panel/tips/history">Przejdź do historii napiwków</a>
+    </section>
+  </div>
+</section>
+<%- include('../partials/promotionModalScript') %>
+<%- include('../partials/footer') %>

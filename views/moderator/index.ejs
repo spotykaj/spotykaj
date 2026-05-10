@@ -1,0 +1,257 @@
+<%- include('../partials/header') %>
+<section class="section compact">
+  <p class="eyebrow">Moderacja</p>
+  <h1>Panel moderatora</h1>
+
+  <div class="admin-grid mobile-dashboard moderator-dashboard" data-mobile-dashboard>
+    <section class="mobile-section order-moderation" data-mobile-section data-mobile-count="<%= moderationListings.length %>" data-mobile-open="true">
+      <h2>Ogłoszenia do moderacji</h2>
+      <div class="table-wrap">
+        <table>
+          <thead><tr><th>Data</th><th>Tytuł</th><th>Autor</th><th>Powód</th><th>Akcje</th></tr></thead>
+          <tbody>
+            <% moderationListings.forEach((listing) => { %>
+              <tr>
+                <td><%= new Date(listing.created_at).toLocaleString('pl-PL') %></td>
+                <td><a href="/ogloszenia/<%= listing.id %>"><%= listing.title %></a></td>
+                <td><%= listing.author_name || '-' %> · <%= listing.author_email %></td>
+                <td><%= listing.moderation_reason || '-' %></td>
+                <td class="actions">
+                  <form action="/moderator/ogloszenia/<%= listing.id %>/status" method="post">
+                    <input type="hidden" name="status" value="approved">
+                    <button class="ghost" type="submit">Zatwierdź</button>
+                  </form>
+                  <form class="coin-form" action="/moderator/ogloszenia/<%= listing.id %>/status" method="post">
+                    <input type="hidden" name="status" value="rejected">
+                    <input type="text" name="reason" maxlength="180" placeholder="Powód" required>
+                    <button class="danger" type="submit">Odrzuć</button>
+                  </form>
+                  <form action="/moderator/ogloszenia/<%= listing.id %>/status" method="post">
+                    <input type="hidden" name="status" value="hidden">
+                    <button class="ghost" type="submit">Ukryj</button>
+                  </form>
+                </td>
+              </tr>
+            <% }) %>
+          </tbody>
+        </table>
+      </div>
+      <% if (moderationListings.length === 0) { %><div class="empty">Brak ogłoszeń do moderacji.</div><% } %>
+    </section>
+
+    <section class="mobile-section order-reports" data-mobile-section data-mobile-count="<%= reports.length %>" data-mobile-open="true">
+      <h2>Zgłoszenia użytkowników</h2>
+      <div class="table-wrap">
+        <table>
+          <thead><tr><th>Data</th><th>Ogłoszenie</th><th>Zgłaszający</th><th>Powód</th><th>Opis</th><th>Akcje</th></tr></thead>
+          <tbody>
+            <% reports.forEach((report) => { %>
+              <tr>
+                <td><%= new Date(report.created_at).toLocaleString('pl-PL') %></td>
+                <td><a href="/ogloszenia/<%= report.listing_id %>"><%= report.listing_title %></a></td>
+                <td><%= report.reporter_email || 'Gość' %></td>
+                <td><%= report.reason %></td>
+                <td><%= report.note || '-' %></td>
+                <td class="actions">
+                  <form class="coin-form" action="/moderator/zgloszenia/<%= report.id %>/rozpatrz" method="post">
+                    <input type="hidden" name="status" value="resolved">
+                    <input type="text" name="reviewer_note" maxlength="180" placeholder="Notatka">
+                    <button class="ghost" type="submit">Rozpatrz</button>
+                  </form>
+                  <form action="/moderator/zgloszenia/<%= report.id %>/rozpatrz" method="post">
+                    <input type="hidden" name="status" value="dismissed">
+                    <button class="danger" type="submit">Odrzuć zgłoszenie</button>
+                  </form>
+                </td>
+              </tr>
+            <% }) %>
+          </tbody>
+        </table>
+      </div>
+      <% if (reports.length === 0) { %><div class="empty">Brak zgłoszeń użytkowników.</div><% } %>
+    </section>
+
+    <section class="mobile-section order-actions" data-mobile-section data-mobile-title="Ostatnie działania" data-mobile-count="<%= suspiciousActivity.length %>">
+      <h2>Podejrzana aktywność</h2>
+      <div class="table-wrap">
+        <table>
+          <thead><tr><th>Data</th><th>Użytkownik</th><th>IP</th><th>Typ</th><th>Wynik</th></tr></thead>
+          <tbody>
+            <% suspiciousActivity.forEach((item) => { %>
+              <tr>
+                <td><%= new Date(item.created_at).toLocaleString('pl-PL') %></td>
+                <td><%= item.user_email || '-' %></td>
+                <td><%= item.ip || '-' %></td>
+                <td><%= item.event_type %></td>
+                <td><%= item.score %></td>
+              </tr>
+            <% }) %>
+          </tbody>
+        </table>
+      </div>
+      <% if (suspiciousActivity.length === 0) { %><div class="empty">Brak podejrzanej aktywności.</div><% } %>
+    </section>
+
+    <section class="mobile-section order-verifications" data-mobile-section data-mobile-count="<%= verificationRequests.length %>" data-mobile-open="true">
+      <h2>Profile do weryfikacji</h2>
+      <div class="table-wrap">
+        <table>
+          <thead><tr><th>Data</th><th>Użytkownik</th><th>Dokument</th><th>Selfie</th><th>Uwagi</th><th>Akcje</th></tr></thead>
+          <tbody>
+            <% verificationRequests.forEach((request) => { %>
+              <tr>
+                <td><%= new Date(request.created_at).toLocaleString('pl-PL') %></td>
+                <td><%= request.user_name %> · <%= request.user_email %></td>
+                <td><a href="<%= request.document_image_path %>" target="_blank" rel="noopener"><img class="verification-thumb" src="<%= request.document_image_path %>" alt="Dokument użytkownika"></a></td>
+                <td><a href="<%= request.selfie_image_path %>" target="_blank" rel="noopener"><img class="verification-thumb" src="<%= request.selfie_image_path %>" alt="Selfie użytkownika"></a></td>
+                <td><%= request.note || '-' %></td>
+                <td class="actions">
+                  <form class="coin-form" action="/moderator/weryfikacje/<%= request.id %>/zatwierdz" method="post">
+                    <input type="text" name="reviewer_note" maxlength="180" placeholder="Notatka">
+                    <button class="ghost" type="submit">Zweryfikuj</button>
+                  </form>
+                  <form class="coin-form" action="/moderator/weryfikacje/<%= request.id %>/odrzuc" method="post">
+                    <input type="text" name="reviewer_note" maxlength="180" placeholder="Powód">
+                    <button class="danger" type="submit">Odrzuć</button>
+                  </form>
+                </td>
+              </tr>
+            <% }) %>
+          </tbody>
+        </table>
+      </div>
+      <% if (verificationRequests.length === 0) { %><div class="empty">Brak wniosków o weryfikację profilu.</div><% } %>
+    </section>
+
+    <section class="mobile-section order-profiles" data-mobile-section data-mobile-count="<%= profiles.length %>">
+      <h2>Konta bez weryfikacji</h2>
+      <div class="table-wrap">
+        <table>
+          <thead><tr><th>Data</th><th>Nazwa</th><th>E-mail</th><th>Rola</th><th>Akcje</th></tr></thead>
+          <tbody>
+            <% profiles.forEach((profile) => { %>
+              <tr>
+                <td><%= new Date(profile.created_at).toLocaleString('pl-PL') %></td>
+                <td><%= profile.name %></td>
+                <td><%= profile.email %></td>
+                <td><%= profile.role === 'moderator' ? 'Moderator' : 'Użytkownik' %></td>
+                <td class="actions">
+                  <form action="/moderator/profile/<%= profile.id %>/zweryfikuj" method="post">
+                    <button class="ghost" type="submit">Zweryfikuj</button>
+                  </form>
+                  <form action="/moderator/profile/<%= profile.id %>/odrzuc" method="post">
+                    <button class="danger" type="submit">Odrzuć</button>
+                  </form>
+                </td>
+              </tr>
+            <% }) %>
+          </tbody>
+        </table>
+      </div>
+      <% if (profiles.length === 0) { %><div class="empty">Brak profili oczekujących na weryfikację.</div><% } %>
+    </section>
+
+    <section class="mobile-section order-pending-listings" data-mobile-section data-mobile-count="<%= pendingListings.length %>">
+      <h2>Ogłoszenia do weryfikacji</h2>
+      <div class="table-wrap">
+        <table>
+          <thead><tr><th>Data</th><th>Tytuł</th><th>Autor</th><th>Status</th><th>Akcje</th></tr></thead>
+          <tbody>
+            <% pendingListings.forEach((listing) => { %>
+              <tr>
+                <td><%= new Date(listing.created_at).toLocaleString('pl-PL') %></td>
+                <td><a href="/ogloszenia/<%= listing.id %>"><%= listing.title %></a></td>
+                <td><%= listing.author_name %> · <%= listing.author_email %></td>
+                <td><%= listing.status === 'approved' || listing.status === 'active' ? 'Zatwierdzone' : (listing.status === 'pending' ? 'Oczekuje' : (listing.status === 'rejected' ? 'Odrzucone' : 'Wstrzymane')) %></td>
+                <td class="actions">
+                  <form action="/moderator/ogloszenia/<%= listing.id %>/zweryfikuj" method="post">
+                    <button class="ghost" type="submit">Zweryfikuj</button>
+                  </form>
+                  <form action="/moderator/ogloszenia/<%= listing.id %>/odrzuc" method="post">
+                    <button class="danger" type="submit">Odrzuć</button>
+                  </form>
+                </td>
+              </tr>
+            <% }) %>
+          </tbody>
+        </table>
+      </div>
+      <% if (pendingListings.length === 0) { %><div class="empty">Brak ogłoszeń oczekujących na weryfikację.</div><% } %>
+    </section>
+
+    <section class="mobile-section order-hidden-listings" data-mobile-section data-mobile-title="Ukryte / odrzucone ogłoszenia" data-mobile-count="<%= listings.length %>">
+      <h2>Ogłoszenia</h2>
+      <div class="table-wrap">
+        <table>
+          <thead><tr><th>Tytuł</th><th>Autor</th><th>Status</th><th>Weryfikacja</th><th>Promocja</th><th>Akcje</th></tr></thead>
+          <tbody>
+            <% listings.forEach((listing) => { %>
+              <tr>
+                <td><a href="/ogloszenia/<%= listing.id %>"><%= listing.title %></a></td>
+                <td><%= listing.author_email %></td>
+                <td><%= listing.status === 'approved' || listing.status === 'active' ? 'Zatwierdzone' : (listing.status === 'pending' ? 'Oczekuje' : (listing.status === 'rejected' ? 'Odrzucone' : 'Wstrzymane')) %></td>
+                <td><%= Number(listing.verified || 0) ? 'Zweryfikowane' : 'Niezweryfikowane' %></td>
+                <td><%= listing.is_promoted ? `Promowane: ${listing.promotion_remaining_text}` : 'Brak aktywnej promocji' %></td>
+                <td class="actions">
+                  <form action="/moderator/ogloszenia/<%= listing.id %>/status" method="post">
+                    <input type="hidden" name="status" value="<%= listing.status === 'approved' || listing.status === 'active' ? 'hidden' : 'approved' %>">
+                    <button class="ghost" type="submit"><%= listing.status === 'approved' || listing.status === 'active' ? 'Pauzuj' : 'Aktywuj' %></button>
+                  </form>
+                </td>
+              </tr>
+            <% }) %>
+          </tbody>
+        </table>
+      </div>
+      <% if (listings.length === 0) { %><div class="empty">Brak ogłoszeń.</div><% } %>
+    </section>
+
+    <section class="mobile-section order-purchases" data-mobile-section data-mobile-count="<%= purchaseRequests.length %>">
+      <h2>Wnioski o Spotycoiny</h2>
+      <div class="table-wrap">
+        <table>
+          <thead><tr><th>Data</th><th>Użytkownik</th><th>Pakiet</th><th>Kod / voucher</th><th>E-mail</th><th>LTC TXID</th><th>Status</th><th>Rozpatrzył</th><th>Akcje</th></tr></thead>
+          <tbody>
+            <% purchaseRequests.forEach((request) => { %>
+              <tr>
+                <td><%= new Date(request.created_at).toLocaleString('pl-PL') %></td>
+                <td><%= request.user_name %> · <%= request.user_email %></td>
+                <td><%= Number(request.package_eur || 0).toLocaleString('pl-PL') %> EUR · <%= Number(request.package_spotycoins || 0).toLocaleString('pl-PL') %> Spotycoinów</td>
+                <td><code><%= request.crypto_code %></code></td>
+                <td><%= request.voucher_email || '-' %></td>
+                <td><code><%= request.ltc_txid || '-' %></code></td>
+                <td>
+                  <% if (request.status === 'approved') { %>
+                    Zatwierdzony
+                  <% } else if (request.status === 'rejected') { %>
+                    Odrzucony
+                  <% } else { %>
+                    Oczekuje
+                  <% } %>
+                </td>
+                <td><%= request.admin_name || request.admin_email || '-' %></td>
+                <td class="actions">
+                  <% if (request.status === 'pending') { %>
+                    <form class="coin-form" action="/moderator/wnioski-spotycoin/<%= request.id %>/zatwierdz" method="post">
+                      <input type="text" name="admin_note" maxlength="180" placeholder="Notatka">
+                      <button class="ghost" type="submit">Zatwierdź</button>
+                    </form>
+                    <form class="coin-form" action="/moderator/wnioski-spotycoin/<%= request.id %>/odrzuc" method="post">
+                      <input type="text" name="admin_note" maxlength="180" placeholder="Powód">
+                      <button class="danger" type="submit">Odrzuć</button>
+                    </form>
+                  <% } else { %>
+                    <span><%= request.admin_note || '-' %></span>
+                  <% } %>
+                </td>
+              </tr>
+            <% }) %>
+          </tbody>
+        </table>
+      </div>
+      <% if (purchaseRequests.length === 0) { %><div class="empty">Brak wniosków o Spotycoiny.</div><% } %>
+    </section>
+  </div>
+</section>
+<%- include('../partials/dashboardMobileTools') %>
+<%- include('../partials/footer') %>

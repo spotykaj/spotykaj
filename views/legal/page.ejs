@@ -1,0 +1,60 @@
+<%- include('../partials/header') %>
+<%
+  function renderInline(text) {
+    const escaped = String(text)
+      .replace(/&/g, '&amp;')
+      .replace(/</g, '&lt;')
+      .replace(/>/g, '&gt;')
+      .replace(/"/g, '&quot;');
+    return escaped.replace(/\[([^\]]+)\]\((mailto:[^)]+)\)/g, '<a href="$2">$1</a>');
+  }
+%>
+<section class="section compact legal-page <%= legalDocument ? 'legal-page-full' : '' %>">
+  <% if (legalDocument) { %>
+    <div class="legal-layout">
+      <aside class="legal-toc" aria-label="Spis treści">
+        <p>Spis treści</p>
+        <nav>
+          <% legalDocument.toc.forEach((item) => { %>
+            <a href="#<%= item.id %>"><%= item.text %></a>
+          <% }) %>
+        </nav>
+      </aside>
+
+      <article class="legal-card legal-document">
+        <% legalDocument.blocks.forEach((block) => { %>
+          <% if (block.type === 'h1') { %>
+            <% if (/^\d+\./.test(block.text)) { %>
+              <h2 id="<%= block.id %>"><%= block.text %></h2>
+            <% } else { %>
+              <h1 id="<%= block.id %>"><%= block.text %></h1>
+            <% } %>
+          <% } else if (block.type === 'h2') { %>
+            <h2 id="<%= block.id %>" class="legal-subtitle"><%= block.text %></h2>
+          <% } else if (block.type === 'p') { %>
+            <p><%- renderInline(block.text) %></p>
+          <% } else if (block.type === 'ul') { %>
+            <ul>
+              <% block.items.forEach((item) => { %>
+                <li><%- renderInline(item) %></li>
+              <% }) %>
+            </ul>
+          <% } else if (block.type === 'hr') { %>
+            <hr>
+          <% } %>
+        <% }) %>
+      </article>
+    </div>
+  <% } else { %>
+    <div class="legal-hero">
+      <p class="eyebrow">Informacje prawne</p>
+      <h1><%= heading %></h1>
+    </div>
+    <div class="legal-card">
+      <% paragraphs.forEach((paragraph) => { %>
+        <p><%= paragraph %></p>
+      <% }) %>
+    </div>
+  <% } %>
+</section>
+<%- include('../partials/footer') %>

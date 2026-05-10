@@ -1,0 +1,388 @@
+<%- include('../partials/header') %>
+<section class="section compact">
+  <p class="eyebrow">Administracja</p>
+  <h1>Panel administracyjny</h1>
+
+  <div class="admin-grid mobile-dashboard admin-dashboard" data-mobile-dashboard>
+    <section class="mobile-section order-status" data-mobile-section data-mobile-count="3" data-mobile-open="true">
+      <h2>Status bezpieczeństwa</h2>
+      <div class="security-status-grid">
+        <div><span>Age gate</span><strong>aktywny</strong></div>
+        <div><span>Turnstile</span><strong><%= securityStatus.turnstile === 'enabled' ? 'włączony' : 'wyłączony' %></strong></div>
+        <div><span>Rate limits</span><strong>aktywne</strong></div>
+      </div>
+    </section>
+
+    <section class="mobile-section order-ledger" data-mobile-section data-mobile-count="<%= Number(ledgerIntegrity.count || 0) %>">
+      <h2>Integralność księgi Spotycoin</h2>
+      <div class="empty">
+        <strong><%= ledgerIntegrity.ok ? 'Księga poprawna' : 'Wykryto naruszenie księgi' %></strong>
+        · Transakcje: <%= Number(ledgerIntegrity.count || 0).toLocaleString('pl-PL') %>
+        · Hash końcowy: <code><%= ledgerIntegrity.headHash %></code>
+        <br>
+        <span>Weryfikacja CLI: <code>npm run ledger:verify</code></span>
+        <% if (!ledgerIntegrity.ok) { %>
+          <ul>
+            <% ledgerIntegrity.errors.slice(0, 5).forEach((error) => { %><li><%= error %></li><% }) %>
+          </ul>
+        <% } %>
+      </div>
+    </section>
+
+    <section class="mobile-section order-moderation" data-mobile-section data-mobile-count="<%= moderationListings.length %>" data-mobile-open="true">
+      <h2>Ogłoszenia do moderacji</h2>
+      <div class="table-wrap">
+        <table>
+          <thead><tr><th>Data</th><th>Tytuł</th><th>Autor</th><th>Powód</th><th>Akcje</th></tr></thead>
+          <tbody>
+            <% moderationListings.forEach((listing) => { %>
+              <tr>
+                <td><%= new Date(listing.created_at).toLocaleString('pl-PL') %></td>
+                <td><a href="/ogloszenia/<%= listing.id %>"><%= listing.title %></a></td>
+                <td><%= listing.author_name || '-' %> · <%= listing.author_email %></td>
+                <td><%= listing.moderation_reason || '-' %></td>
+                <td class="actions">
+                  <form action="/admin/ogloszenia/<%= listing.id %>/status" method="post">
+                    <input type="hidden" name="status" value="approved">
+                    <button class="ghost" type="submit">Zatwierdź</button>
+                  </form>
+                  <form class="coin-form" action="/admin/ogloszenia/<%= listing.id %>/status" method="post">
+                    <input type="hidden" name="status" value="rejected">
+                    <input type="text" name="reason" maxlength="180" placeholder="Powód" required>
+                    <button class="danger" type="submit">Odrzuć</button>
+                  </form>
+                  <form action="/admin/ogloszenia/<%= listing.id %>/status" method="post">
+                    <input type="hidden" name="status" value="hidden">
+                    <button class="ghost" type="submit">Ukryj</button>
+                  </form>
+                </td>
+              </tr>
+            <% }) %>
+          </tbody>
+        </table>
+      </div>
+      <% if (moderationListings.length === 0) { %><div class="empty">Brak ogłoszeń do moderacji.</div><% } %>
+    </section>
+
+    <section class="mobile-section order-reports" data-mobile-section data-mobile-count="<%= reports.length %>">
+      <h2>Zgłoszenia użytkowników</h2>
+      <div class="table-wrap">
+        <table>
+          <thead><tr><th>Data</th><th>Ogłoszenie</th><th>Zgłaszający</th><th>Powód</th><th>Opis</th><th>Akcje</th></tr></thead>
+          <tbody>
+            <% reports.forEach((report) => { %>
+              <tr>
+                <td><%= new Date(report.created_at).toLocaleString('pl-PL') %></td>
+                <td><a href="/ogloszenia/<%= report.listing_id %>"><%= report.listing_title %></a></td>
+                <td><%= report.reporter_email || 'Gość' %></td>
+                <td><%= report.reason %></td>
+                <td><%= report.note || '-' %></td>
+                <td class="actions">
+                  <form class="coin-form" action="/admin/zgloszenia/<%= report.id %>/rozpatrz" method="post">
+                    <input type="hidden" name="status" value="resolved">
+                    <input type="text" name="reviewer_note" maxlength="180" placeholder="Notatka">
+                    <button class="ghost" type="submit">Rozpatrz</button>
+                  </form>
+                  <form action="/admin/zgloszenia/<%= report.id %>/rozpatrz" method="post">
+                    <input type="hidden" name="status" value="dismissed">
+                    <button class="danger" type="submit">Odrzuć zgłoszenie</button>
+                  </form>
+                </td>
+              </tr>
+            <% }) %>
+          </tbody>
+        </table>
+      </div>
+      <% if (reports.length === 0) { %><div class="empty">Brak zgłoszeń użytkowników.</div><% } %>
+    </section>
+
+    <section class="mobile-section order-suspicious" data-mobile-section data-mobile-count="<%= suspiciousActivity.length %>">
+      <h2>Podejrzana aktywność</h2>
+      <div class="table-wrap">
+        <table>
+          <thead><tr><th>Data</th><th>Użytkownik</th><th>IP</th><th>Typ</th><th>Wynik</th></tr></thead>
+          <tbody>
+            <% suspiciousActivity.forEach((item) => { %>
+              <tr>
+                <td><%= new Date(item.created_at).toLocaleString('pl-PL') %></td>
+                <td><%= item.user_email || '-' %></td>
+                <td><%= item.ip || '-' %></td>
+                <td><%= item.event_type %></td>
+                <td><%= item.score %></td>
+              </tr>
+            <% }) %>
+          </tbody>
+        </table>
+      </div>
+      <% if (suspiciousActivity.length === 0) { %><div class="empty">Brak podejrzanej aktywności.</div><% } %>
+    </section>
+
+    <section class="mobile-section order-verifications" data-mobile-section data-mobile-count="<%= verificationRequests.length %>">
+      <h2>Profile do weryfikacji</h2>
+      <div class="table-wrap">
+        <table>
+          <thead><tr><th>Data</th><th>Użytkownik</th><th>Dokument</th><th>Selfie</th><th>Uwagi</th><th>Status</th><th>Rozpatrzył</th><th>Akcje</th></tr></thead>
+          <tbody>
+            <% verificationRequests.forEach((request) => { %>
+              <tr>
+                <td><%= new Date(request.created_at).toLocaleString('pl-PL') %></td>
+                <td><%= request.user_name %> · <%= request.user_email %></td>
+                <td><a href="<%= request.document_image_path %>" target="_blank" rel="noopener"><img class="verification-thumb" src="<%= request.document_image_path %>" alt="Dokument użytkownika"></a></td>
+                <td><a href="<%= request.selfie_image_path %>" target="_blank" rel="noopener"><img class="verification-thumb" src="<%= request.selfie_image_path %>" alt="Selfie użytkownika"></a></td>
+                <td><%= request.note || '-' %></td>
+                <td>
+                  <% if (request.status === 'approved') { %>
+                    Zatwierdzony
+                  <% } else if (request.status === 'rejected') { %>
+                    Odrzucony
+                  <% } else { %>
+                    Oczekuje
+                  <% } %>
+                </td>
+                <td><%= request.reviewer_name || request.reviewer_email || '-' %></td>
+                <td class="actions">
+                  <% if (request.status === 'pending') { %>
+                    <form class="coin-form" action="/admin/weryfikacje/<%= request.id %>/zatwierdz" method="post">
+                      <input type="text" name="reviewer_note" maxlength="180" placeholder="Notatka">
+                      <button class="ghost" type="submit">Zweryfikuj</button>
+                    </form>
+                    <form class="coin-form" action="/admin/weryfikacje/<%= request.id %>/odrzuc" method="post">
+                      <input type="text" name="reviewer_note" maxlength="180" placeholder="Powód">
+                      <button class="danger" type="submit">Odrzuć</button>
+                    </form>
+                  <% } else { %>
+                    <span><%= request.reviewer_note || '-' %></span>
+                  <% } %>
+                </td>
+              </tr>
+            <% }) %>
+          </tbody>
+        </table>
+      </div>
+      <% if (verificationRequests.length === 0) { %><div class="empty">Brak wniosków o weryfikację profilu.</div><% } %>
+    </section>
+
+    <section class="mobile-section order-purchases" data-mobile-section data-mobile-count="<%= purchaseRequests.length %>" data-mobile-open="true">
+      <h2>Wnioski o Spotycoiny</h2>
+      <div class="table-wrap">
+        <table>
+          <thead><tr><th>Data</th><th>Użytkownik</th><th>Pakiet</th><th>Kod / voucher</th><th>E-mail</th><th>LTC TXID</th><th>Uwagi użytkownika</th><th>Status</th><th>Notatka admina</th><th>Akcja</th></tr></thead>
+          <tbody>
+            <% purchaseRequests.forEach((request) => { %>
+              <tr>
+                <td><%= new Date(request.created_at).toLocaleString('pl-PL') %></td>
+                <td><%= request.user_name %> · <%= request.user_email %></td>
+                <td><%= Number(request.package_eur || 0).toLocaleString('pl-PL') %> EUR · <%= Number(request.package_spotycoins || 0).toLocaleString('pl-PL') %> Spotycoinów</td>
+                <td><code><%= request.crypto_code %></code></td>
+                <td><%= request.voucher_email || '-' %></td>
+                <td><code><%= request.ltc_txid || '-' %></code></td>
+                <td><%= request.user_note || '-' %></td>
+                <td>
+                  <% if (request.status === 'approved') { %>
+                    Zatwierdzony
+                  <% } else if (request.status === 'rejected') { %>
+                    Odrzucony
+                  <% } else { %>
+                    Oczekuje
+                  <% } %>
+                </td>
+                <td><%= request.admin_note || '-' %></td>
+                <td class="actions">
+                  <% if (request.status === 'pending') { %>
+                    <form class="coin-form" action="/admin/wnioski-spotycoin/<%= request.id %>/zatwierdz" method="post">
+                      <input type="text" name="admin_note" maxlength="180" placeholder="Notatka">
+                      <button class="ghost" type="submit">Zatwierdź</button>
+                    </form>
+                    <form class="coin-form" action="/admin/wnioski-spotycoin/<%= request.id %>/odrzuc" method="post">
+                      <input type="text" name="admin_note" maxlength="180" placeholder="Powód">
+                      <button class="danger" type="submit">Odrzuć</button>
+                    </form>
+                  <% } else { %>
+                    <span><%= request.admin_name || '-' %></span>
+                  <% } %>
+                </td>
+              </tr>
+            <% }) %>
+          </tbody>
+        </table>
+      </div>
+      <% if (purchaseRequests.length === 0) { %><div class="empty">Brak wniosków o Spotycoiny.</div><% } %>
+    </section>
+
+    <section class="mobile-section order-users" data-mobile-section data-mobile-count="<%= users.length %>">
+      <h2>Użytkownicy</h2>
+      <div class="table-wrap">
+        <table>
+          <thead><tr><th>Nazwa</th><th>E-mail</th><th>Rola</th><th>Spotycoin</th><th>Dodaj monety</th><th>Akcja</th></tr></thead>
+          <tbody>
+            <% users.forEach((account) => { %>
+              <tr>
+                <td><%= account.name %></td>
+                <td><%= account.email %></td>
+                <td>
+                  <% if (account.role === 'admin') { %>
+                    Administrator
+                  <% } else if (account.role === 'moderator') { %>
+                    Moderator
+                  <% } else { %>
+                    Użytkownik
+                  <% } %>
+                </td>
+                <td><strong><%= Number(account.coins || 0).toLocaleString('pl-PL') %></strong></td>
+                <td>
+                  <form class="coin-form" action="/admin/uzytkownicy/<%= account.id %>/spotycoin" method="post">
+                    <input type="number" name="amount" min="1" step="1" placeholder="Liczba" required>
+                    <input type="text" name="note" maxlength="180" placeholder="Opis">
+                    <button class="ghost" type="submit">Dodaj</button>
+                  </form>
+                </td>
+                <td class="actions">
+                  <form action="/admin/uzytkownicy/<%= account.id %>/rola" method="post">
+                    <input type="hidden" name="role" value="<%= account.role === 'admin' ? 'user' : 'admin' %>">
+                    <button class="ghost" type="submit"><%= account.role === 'admin' ? 'Odbierz admina' : 'Nadaj admina' %></button>
+                  </form>
+                  <% if (account.role === 'moderator') { %>
+                    <form action="/admin/uzytkownicy/<%= account.id %>/rola" method="post">
+                      <input type="hidden" name="role" value="user">
+                      <button class="ghost" type="submit">Odbierz moderatora</button>
+                    </form>
+                  <% } else if (account.role !== 'admin') { %>
+                    <form action="/admin/uzytkownicy/<%= account.id %>/rola" method="post">
+                      <input type="hidden" name="role" value="moderator">
+                      <button class="ghost" type="submit">Nadaj moderatora</button>
+                    </form>
+                  <% } %>
+                </td>
+              </tr>
+            <% }) %>
+          </tbody>
+        </table>
+      </div>
+    </section>
+
+    <section class="mobile-section order-history" data-mobile-section data-mobile-count="<%= transactions.slice(0, 10).length %>">
+      <h2>Ostatnie 10 transakcji Spotycoin</h2>
+      <div class="table-wrap">
+        <table>
+          <thead><tr><th>#</th><th>Data</th><th>Użytkownik</th><th>Typ</th><th>Kwota</th><th>Saldo przed</th><th>Saldo po</th><th>Referencja</th><th>Hash</th><th>Opis</th></tr></thead>
+          <tbody>
+            <% transactions.slice(0, 10).forEach((transaction) => { %>
+              <tr>
+                <td><%= transaction.ledger_index || transaction.id %></td>
+                <td><%= new Date(transaction.created_at).toLocaleString('pl-PL') %></td>
+                <td><%= transaction.user_name %> · <%= transaction.user_email %></td>
+                <td><%= transaction.transaction_type || 'adjustment' %></td>
+                <td><%= Number(transaction.amount) > 0 ? '+' : '' %><%= Number(transaction.amount).toLocaleString('pl-PL') %> Spotycoin</td>
+                <td><%= Number(transaction.balance_before || 0).toLocaleString('pl-PL') %></td>
+                <td><%= Number(transaction.balance_after).toLocaleString('pl-PL') %></td>
+                <td><%= transaction.reference_type ? `${transaction.reference_type}:${transaction.reference_id || '-'}` : '-' %></td>
+                <td><code><%= String(transaction.hash || '').slice(0, 12) %></code></td>
+                <td><%= transaction.note || 'Dodanie środków' %></td>
+              </tr>
+            <% }) %>
+          </tbody>
+        </table>
+      </div>
+      <% if (transactions.length === 0) { %><div class="empty">Brak historii Spotycoin.</div><% } %>
+    </section>
+
+    <section class="mobile-section order-messages" data-mobile-section data-mobile-count="<%= latestMessages.length %>">
+      <h2>Ostatnie 20 wiadomości</h2>
+      <div class="table-wrap">
+        <table>
+          <thead><tr><th>Data</th><th>Nadawca</th><th>Odbiorca</th><th>Ogłoszenie</th><th>Koszt</th><th>Status</th><th>Akcja</th></tr></thead>
+          <tbody>
+            <% latestMessages.forEach((item) => { %>
+              <tr>
+                <td><%= new Date(item.created_at).toLocaleString('pl-PL') %></td>
+                <td><%= item.sender_name %> · <%= item.sender_email %></td>
+                <td><%= item.receiver_name %> · <%= item.receiver_email %></td>
+                <td><%= item.listing_title %></td>
+                <td><%= Number(item.cost_spotycoins || 0).toLocaleString('pl-PL') %> Spotycoinów</td>
+                <td><%= Number(item.is_read) ? 'Przeczytana' : 'Nieprzeczytana' %></td>
+                <td><a class="button small-button" href="/wiadomosci/<%= item.id %>">Otwórz</a></td>
+              </tr>
+            <% }) %>
+          </tbody>
+        </table>
+      </div>
+      <% if (latestMessages.length === 0) { %><div class="empty">Brak wiadomości.</div><% } %>
+    </section>
+
+    <section class="mobile-section order-listings" data-mobile-section data-mobile-count="<%= listings.length %>">
+      <h2>Ogłoszenia</h2>
+      <div class="table-wrap">
+        <table>
+          <thead><tr><th>Tytuł</th><th>Autor</th><th>Status</th><th>Promocja</th><th>Akcje</th></tr></thead>
+          <tbody>
+            <% listings.forEach((listing) => { %>
+              <tr>
+                <td><a href="/ogloszenia/<%= listing.id %>"><%= listing.title %></a></td>
+                <td><%= listing.author_email %></td>
+                <td><%= listing.status === 'approved' || listing.status === 'active' ? 'Zatwierdzone' : (listing.status === 'pending' ? 'Oczekuje' : (listing.status === 'rejected' ? 'Odrzucone' : 'Ukryte')) %></td>
+                <td><%= listing.is_promoted ? `Promowane: ${listing.promotion_remaining_text}` : 'Brak aktywnej promocji' %></td>
+                <td class="actions">
+                  <form action="/admin/ogloszenia/<%= listing.id %>/status" method="post">
+                    <input type="hidden" name="status" value="<%= listing.status === 'approved' || listing.status === 'active' ? 'hidden' : 'approved' %>">
+                    <button class="ghost" type="submit"><%= listing.status === 'approved' || listing.status === 'active' ? 'Ukryj' : 'Pokaż' %></button>
+                  </form>
+                  <form action="/ogloszenia/<%= listing.id %>?_method=DELETE" method="post" onsubmit="return confirm('Czy na pewno chcesz usunąć ogłoszenie?');">
+                    <button class="danger" type="submit">Usuń ogłoszenie</button>
+                  </form>
+                </td>
+              </tr>
+            <% }) %>
+          </tbody>
+        </table>
+      </div>
+    </section>
+
+    <section class="mobile-section order-purchase-history" data-mobile-section data-mobile-count="<%= purchases.length %>">
+      <h2>Ostatnie zakupy Spotycoin</h2>
+      <div class="table-wrap">
+        <table>
+          <thead><tr><th>Data</th><th>Użytkownik</th><th>Pakiet</th><th>Kod</th><th>Dodano</th><th>Hash</th></tr></thead>
+          <tbody>
+            <% purchases.forEach((purchase) => {
+              let metadata = {};
+              try { metadata = JSON.parse(purchase.metadata || '{}'); } catch (error) { metadata = {}; }
+            %>
+              <tr>
+                <td><%= new Date(purchase.created_at).toLocaleString('pl-PL') %></td>
+                <td><%= purchase.user_name %> · <%= purchase.user_email %></td>
+                <td><%= Number(metadata.packageAmount || purchase.amount || 0).toLocaleString('pl-PL') %> Spotycoinów</td>
+                <td><code><%= metadata.code || purchase.reference_id || '-' %></code></td>
+                <td>+<%= Number(purchase.amount || 0).toLocaleString('pl-PL') %></td>
+                <td><code><%= String(purchase.hash || '').slice(0, 12) %></code></td>
+              </tr>
+            <% }) %>
+          </tbody>
+        </table>
+      </div>
+      <% if (purchases.length === 0) { %><div class="empty">Brak zakupów Spotycoin.</div><% } %>
+    </section>
+
+    <section class="mobile-section order-audit" data-mobile-section data-mobile-count="<%= auditLog.length %>">
+      <h2>Dziennik administracyjny</h2>
+      <div class="table-wrap">
+        <table>
+          <thead><tr><th>Data</th><th>Moderator</th><th>Akcja</th><th>Cel</th><th>Dane</th></tr></thead>
+          <tbody>
+            <% auditLog.forEach((item) => { %>
+              <tr>
+                <td><%= new Date(item.timestamp).toLocaleString('pl-PL') %></td>
+                <td><%= item.admin_email || '-' %></td>
+                <td><%= item.action_type %></td>
+                <td><%= item.target_type %>:<%= item.target_id || '-' %></td>
+                <td><code><%= item.metadata || '-' %></code></td>
+              </tr>
+            <% }) %>
+          </tbody>
+        </table>
+      </div>
+      <% if (auditLog.length === 0) { %><div class="empty">Brak wpisów audytu.</div><% } %>
+    </section>
+  </div>
+</section>
+<%- include('../partials/dashboardMobileTools') %>
+<%- include('../partials/footer') %>

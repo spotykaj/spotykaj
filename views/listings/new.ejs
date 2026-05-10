@@ -1,0 +1,760 @@
+<%- include('../partials/header') %>
+<script>document.body.classList.add('listing-create-page');</script>
+<%
+  const steps = ['Ogłoszenie', 'Szczegóły', 'Zdjęcia', 'Promowanie', 'Zakończenie'];
+  const languageOptions = ['Polski', 'Angielski', 'Niemiecki', 'Ukraiński', 'Rosyjski', 'Czeski', 'Francuski', 'Hiszpański', 'Włoski', 'Arabski', 'Bułgarski', 'Holenderski', 'Portugalski', 'Turecki', 'Węgierski', 'Grecki'];
+  const ethnicityOptions = ['Brak', 'Europejska', 'Afrykańska', 'Latynoska', 'Mix', 'Arabska', 'Indyjska', 'Azjatycka'];
+  const nationalityOptions = ['Polska', 'Ukraińska', 'Białoruska', 'Czeska', 'Słowacka', 'Niemiecka', 'Francuska', 'Hiszpańska', 'Włoska', 'Brazylijska', 'Kolumbijska', 'Tajska', 'Wietnamska', 'Inna'];
+  const preferenceOptions = ['2k+1m', '2m+1k', '69', 'Akceptuję osoby niepełnosprawne', 'Crossdressing', 'Cuckold', 'Częściowo ogolone', 'Deep throat', 'Deptanie', 'Dogging', 'Dominacja', 'Duet z koleżanką', 'Dwa zbliżenia w godzinie', 'Dyskrecja', 'Dziki seks', 'Eksperymenty', 'Face fucking', 'Facesitting', 'Femdom', 'Fetysz butów', 'Fetysz stóp', 'Finał na ciało', 'Finał na twarz', 'Finał w buzi', 'Fisting', 'Footjob', 'Francuz bez zabezpieczenia', 'Francuz w zabezpieczeniu', 'Gang Bang', 'Gra wstępna', 'Handjob'];
+  const priceOptions = ['15 minut', '30 minut', '45 minut', '2 godziny', '3 godziny', '6 godzin', '12 godzin', '24 godziny', 'Noc', 'Weekend', 'Tydzień'];
+%>
+
+<section class="create-wizard-page">
+  <form class="create-wizard-card" action="/ogloszenia" method="post" enctype="multipart/form-data" data-create-listing-form novalidate>
+    <header class="create-wizard-hero">
+      <div>
+        <p class="eyebrow">Nowe ogłoszenie</p>
+        <h1>Dodaj ogłoszenie</h1>
+      </div>
+      <p>Uzupełnij profil, lokalizację, media i promowanie. Dane zostają zapisane lokalnie podczas przechodzenia między krokami.</p>
+    </header>
+
+    <section class="wizard-category-band" aria-label="Kategorie ogłoszenia">
+      <span>Wybierz kategorię ogłoszenia</span>
+      <div class="wizard-category-pills">
+        <% wizardCategories.forEach((category, index) => { %>
+          <button class="category-pill <%= index === 0 ? 'is-active' : '' %>" type="button" data-category-pill="<%= category %>" aria-pressed="<%= index === 0 ? 'true' : 'false' %>"><%= category %></button>
+        <% }) %>
+      </div>
+    </section>
+
+    <nav class="wizard-stepper" aria-label="Kroki formularza">
+      <% steps.forEach((stepLabel, index) => { %>
+        <button class="stepper-item <%= index === 0 ? 'is-active' : '' %>" type="button" data-step-tab="<%= index + 1 %>" aria-selected="<%= index === 0 ? 'true' : 'false' %>">
+          <span><%= index + 1 %></span>
+          <strong><%= stepLabel %></strong>
+        </button>
+      <% }) %>
+    </nav>
+
+    <section class="wizard-panel-new is-active" data-step="1">
+      <div class="panel-heading">
+        <p class="eyebrow">Krok 1</p>
+        <h2>Ogłoszenie</h2>
+      </div>
+      <div class="field-grid three">
+        <label class="field wide">Nazwa / tytuł
+          <input name="title" maxlength="120" required>
+        </label>
+        <label class="field">Wiek
+          <input type="number" name="age" min="18" max="99" required>
+        </label>
+        <label class="field">Płeć
+          <select name="gender" required data-gender-select>
+            <option value="">Wybierz</option>
+            <option>Kobieta</option>
+            <option>Mężczyzna</option>
+            <option>Para</option>
+            <option>Trans</option>
+            <option>Klub / Firma</option>
+            <option>Inna</option>
+          </select>
+        </label>
+        <label class="field">Orientacja
+          <select name="orientation">
+            <option value="">Wybierz</option>
+            <option>Hetero</option>
+            <option>Bi</option>
+            <option>Gej/Les</option>
+            <option>Inna</option>
+          </select>
+        </label>
+        <label class="field">Znak zodiaku
+          <select name="zodiac">
+            <option value="">Wybierz</option>
+            <option>Baran</option>
+            <option>Byk</option>
+            <option>Bliźnięta</option>
+            <option>Rak</option>
+            <option>Lew</option>
+            <option>Panna</option>
+            <option>Waga</option>
+            <option>Skorpion</option>
+            <option>Strzelec</option>
+            <option>Koziorożec</option>
+            <option>Wodnik</option>
+            <option>Ryby</option>
+          </select>
+        </label>
+        <label class="field">Cena na godz. w PLN
+          <input type="number" min="0" step="0.01" name="price" required data-price-source>
+        </label>
+        <label class="field">Wzrost
+          <input type="number" name="height" min="100" max="230">
+        </label>
+        <label class="field">Waga
+          <input type="number" name="weight" min="35" max="220">
+        </label>
+        <label class="field">Biust
+          <select name="bust">
+            <option value="">Wybierz</option>
+            <% ['1', '2', '3', '4', '5', '6', '7', '8'].forEach((size) => { %><option><%= size %></option><% }) %>
+          </select>
+        </label>
+        <label class="field">Rodzaj biustu
+          <select name="bustType">
+            <option value="">Wybierz</option>
+            <option>Naturalny</option>
+            <option>Powiększony</option>
+            <option>Nie dotyczy</option>
+          </select>
+        </label>
+        <label class="field">Oczy
+          <select name="eyes">
+            <option value="">Wybierz</option>
+            <% ['Niebieskie', 'Zielone', 'Brązowe', 'Szare', 'Piwne', 'Czarne'].forEach((color) => { %><option><%= color %></option><% }) %>
+          </select>
+        </label>
+        <label class="field">Włosy
+          <select name="hair">
+            <option value="">Wybierz</option>
+            <% ['Blond', 'Czarne', 'Brązowe', 'Rude', 'Siwe', 'Kolorowe', 'Łyse'].forEach((color) => { %><option><%= color %></option><% }) %>
+          </select>
+        </label>
+      </div>
+    </section>
+
+    <section class="wizard-panel-new" data-step="2">
+      <div class="panel-heading">
+        <p class="eyebrow">Krok 2</p>
+        <h2>Szczegóły</h2>
+      </div>
+      <div class="details-layout">
+        <article class="wizard-section-card location-card full">
+          <h3>Lokalizacja i kontakt</h3>
+          <div class="field-grid location-grid">
+            <label class="field">Kraj
+              <input type="hidden" name="country" value="Polska">
+              <input value="Polska" readonly aria-readonly="true" data-country-display>
+            </label>
+            <label class="field">Województwo
+              <select name="region" required data-region-select>
+                <% regiony.forEach((region) => { %><option value="<%= region %>"><%= region %></option><% }) %>
+              </select>
+            </label>
+            <label class="field">Miasto
+              <select name="city" required data-city-select>
+                <option value="">Wybierz województwo</option>
+              </select>
+            </label>
+            <label class="field">Dzielnica
+              <select name="district" data-district-select>
+                <option value="">Najpierw wybierz miasto</option>
+              </select>
+            </label>
+            <label class="field">Telefon
+              <input name="phone" inputmode="tel" maxlength="40" placeholder="+48 123 456 789" pattern="^\+?[0-9 ]*$">
+            </label>
+            <label class="field">Preferowany kontakt
+              <select name="contactPreference">
+                <option>Telefon</option>
+                <option>SMS</option>
+                <option>WhatsApp</option>
+                <option>E-mail</option>
+              </select>
+            </label>
+            <label class="field">Kategoria
+              <select name="category" required data-category-select>
+                <% wizardCategories.forEach((category) => { %><option value="<%= category %>"><%= category %></option><% }) %>
+              </select>
+            </label>
+          </div>
+        </article>
+
+        <article class="wizard-section-card full">
+          <h3>Opis</h3>
+          <label class="field">Opis ogłoszenia
+            <textarea name="description" rows="8" required></textarea>
+          </label>
+        </article>
+
+        <article class="wizard-section-card">
+          <h3>Języki obce</h3>
+          <div class="pill-grid">
+            <% languageOptions.forEach((language) => { %>
+              <label class="select-pill"><input type="checkbox" name="languages[]" value="<%= language %>"><span><%= language %></span></label>
+            <% }) %>
+          </div>
+        </article>
+
+        <article class="wizard-section-card">
+          <h3>Narodowość</h3>
+          <label class="field">Narodowość
+            <select name="nationality">
+              <% nationalityOptions.forEach((nationality) => { %><option><%= nationality %></option><% }) %>
+            </select>
+          </label>
+        </article>
+
+        <article class="wizard-section-card full">
+          <h3>Etniczność</h3>
+          <div class="pill-grid compact">
+            <% ethnicityOptions.forEach((ethnicity, index) => { %>
+              <label class="select-pill"><input type="radio" name="ethnicity" value="<%= ethnicity %>" <%= index === 0 ? 'checked' : '' %>><span><%= ethnicity %></span></label>
+            <% }) %>
+          </div>
+        </article>
+
+        <article class="wizard-section-card full">
+          <h3>Godziny spotkań</h3>
+          <div class="hours-grid">
+            <% ['Poniedziałek - Piątek', 'Sobota', 'Niedziela'].forEach((dayLabel, index) => { %>
+              <div class="hours-row">
+                <strong><%= dayLabel %></strong>
+                <label>Od <input type="time" name="hoursFrom<%= index %>" value="10:00"></label>
+                <label>Do <input type="time" name="hoursTo<%= index %>" value="22:00"></label>
+                <label class="switch-pill"><input type="checkbox" name="dayOff<%= index %>"><span>Wolne</span></label>
+                <label class="switch-pill"><input type="checkbox" name="allDay<%= index %>"><span>Cały czas</span></label>
+              </div>
+            <% }) %>
+          </div>
+        </article>
+
+        <article class="wizard-section-card full">
+          <div class="section-title-row">
+            <h3>Cennik</h3>
+            <button class="mini-action" type="button" data-toggle-prices>+ Więcej opcji cenowych</button>
+          </div>
+          <label class="field price-mirror-field">Cena na godz. w PLN
+            <input type="number" min="0" step="0.01" data-price-mirror>
+          </label>
+          <div class="extra-prices" data-extra-prices hidden>
+            <% priceOptions.forEach((priceLabel) => { %>
+              <label class="field"><%= priceLabel %>
+                <input type="number" min="0" step="0.01" name="price_<%= priceLabel.replace(/\s+/g, '_').replace(/ł/g, 'l') %>">
+              </label>
+            <% }) %>
+          </div>
+        </article>
+
+        <article class="wizard-section-card">
+          <h3>Wyjazdy</h3>
+          <div class="pill-grid compact">
+            <% ['Tak', 'Nie', 'Tylko hotele'].forEach((outcall, index) => { %>
+              <label class="select-pill"><input type="radio" name="outcalls" value="<%= outcall %>" <%= index === 1 ? 'checked' : '' %>><span><%= outcall %></span></label>
+            <% }) %>
+          </div>
+        </article>
+
+        <article class="wizard-section-card full">
+          <div class="section-title-row">
+            <h3>Preferencje</h3>
+            <span class="selected-counter">Wybrano: <strong data-preferences-count>0</strong></span>
+          </div>
+          <label class="field preference-search">Szukaj preferencji...
+            <input type="search" data-preference-search placeholder="Szukaj preferencji...">
+          </label>
+          <div class="pill-grid preference-grid" data-preference-grid>
+            <% preferenceOptions.forEach((preference) => { %>
+              <label class="select-pill" data-preference-item><input type="checkbox" name="preferences[]" value="<%= preference %>"><span><%= preference %></span></label>
+            <% }) %>
+          </div>
+        </article>
+      </div>
+    </section>
+
+    <section class="wizard-panel-new" data-step="3">
+      <div class="panel-heading">
+        <p class="eyebrow">Krok 3</p>
+        <h2>Zdjęcia</h2>
+      </div>
+      <div class="media-layout">
+        <div class="premium-upload-card">
+          <input class="native-file-hidden" id="listing-images" type="file" name="images" accept="image/*" multiple required data-photo-input>
+          <label class="upload-cta" for="listing-images">Wybierz zdjęcia</label>
+          <strong>Dodaj od 3 do 6 zdjęć</strong>
+          <p data-photo-count>Nie wybrano zdjęć.</p>
+        </div>
+        <div class="photo-carousel" data-photo-preview-slider aria-label="Podgląd zdjęć">
+          <p class="empty-media">Wybrane zdjęcia pojawią się tutaj.</p>
+        </div>
+        <input type="hidden" name="tattooRemovalCount" value="0" data-tattoo-count>
+        <div class="premium-upload-card video">
+          <input class="native-file-hidden" id="listing-video" type="file" name="video" accept="video/*" data-video-input>
+          <label class="upload-cta" for="listing-video">Wybierz wideo</label>
+          <strong>Wideo jest opcjonalne i obecnie darmowe</strong>
+          <p data-video-file>Nie wybrano pliku wideo.</p>
+        </div>
+        <aside class="modern-cost-summary">
+          <span>Koszt retuszu:</span>
+          <strong><span data-retouch-total>0</span> Spotycoinów</strong>
+        </aside>
+      </div>
+    </section>
+
+    <section class="wizard-panel-new" data-step="4">
+      <div class="panel-heading">
+        <p class="eyebrow">Krok 4</p>
+        <h2>Promowanie</h2>
+      </div>
+      <div class="promotion-card-grid">
+        <% promotionOptions.forEach((option, index) => { %>
+          <label class="promotion-card">
+            <input type="radio" name="promotionDays" value="<%= option.days %>" data-price="<%= option.price %>" data-promotion-option <%= index === 0 ? 'checked' : '' %>>
+            <span><%= option.label %></span>
+            <strong><%= option.price %> Spotycoinów</strong>
+          </label>
+        <% }) %>
+      </div>
+      <aside class="modern-cost-summary wide">
+        <span>Łączny koszt opcji:</span>
+        <strong><span data-cost-total>0</span> Spotycoinów</strong>
+      </aside>
+      <span hidden data-cost-tattoo>0</span>
+      <span hidden data-cost-promotion>0</span>
+    </section>
+
+    <section class="wizard-panel-new" data-step="5">
+      <div class="panel-heading">
+        <p class="eyebrow">Krok 5</p>
+        <h2>Zakończenie</h2>
+      </div>
+      <div class="final-summary">
+        <div><span>Kategoria</span><strong data-summary-value="category">Panie</strong></div>
+        <div><span>Nazwa / tytuł</span><strong data-summary-value="title">-</strong></div>
+        <div><span>Lokalizacja</span><strong data-summary-value="location">-</strong></div>
+        <div><span>Wiek</span><strong data-summary-value="age">-</strong></div>
+        <div><span>Cena za godz.</span><strong data-summary-value="price">-</strong></div>
+        <div><span>Promowanie</span><strong data-summary-value="promotion">Brak promocji</strong></div>
+        <div><span>Koszt retuszu</span><strong><span data-summary-value="retouch">0</span> Spotycoinów</strong></div>
+        <div><span>Total Spotycoin</span><strong><span data-summary-value="total">0</span> Spotycoinów</strong></div>
+        <div><span>Liczba zdjęć</span><strong data-summary-value="photos">0</strong></div>
+      </div>
+      <button class="publish-button" type="submit">Dodaj ogłoszenie</button>
+    </section>
+
+    <footer class="wizard-nav-actions">
+      <button type="button" data-step-start>Start</button>
+      <button type="button" data-step-prev>Wstecz</button>
+      <button type="button" data-step-next>Dalej</button>
+    </footer>
+  </form>
+</section>
+
+<script>
+  (() => {
+    const form = document.querySelector('[data-create-listing-form]');
+    if (!form) return;
+
+    const storageKey = 'spotykaj:add-listing:v2';
+    const panels = Array.from(form.querySelectorAll('[data-step]'));
+    const tabs = Array.from(form.querySelectorAll('[data-step-tab]'));
+    const categoryPills = Array.from(form.querySelectorAll('[data-category-pill]'));
+    const categorySelect = form.querySelector('[data-category-select]');
+    const genderSelect = form.querySelector('[data-gender-select]');
+    const regionSelect = form.querySelector('[data-region-select]');
+    const citySelect = form.querySelector('[data-city-select]');
+    const districtSelect = form.querySelector('[data-district-select]');
+    const priceSource = form.querySelector('[data-price-source]');
+    const priceMirror = form.querySelector('[data-price-mirror]');
+    const extraPrices = form.querySelector('[data-extra-prices]');
+    const preferenceSearch = form.querySelector('[data-preference-search]');
+    const preferenceItems = Array.from(form.querySelectorAll('[data-preference-item]'));
+    const preferencesCount = form.querySelector('[data-preferences-count]');
+    const photoInput = form.querySelector('[data-photo-input]');
+    const photoCount = form.querySelector('[data-photo-count]');
+    const photoPreviewSlider = form.querySelector('[data-photo-preview-slider]');
+    const tattooInput = form.querySelector('[data-tattoo-count]');
+    const videoInput = form.querySelector('[data-video-input]');
+    const videoFile = form.querySelector('[data-video-file]');
+    const promotionOptions = Array.from(form.querySelectorAll('[data-promotion-option]'));
+    const retouchTotal = form.querySelector('[data-retouch-total]');
+    const costTotal = form.querySelector('[data-cost-total]');
+    const costTattoo = form.querySelector('[data-cost-tattoo]');
+    const costPromotion = form.querySelector('[data-cost-promotion]');
+    const nextButton = form.querySelector('[data-step-next]');
+    const prevButton = form.querySelector('[data-step-prev]');
+    const startButton = form.querySelector('[data-step-start]');
+    const summary = {
+      title: form.querySelector('[data-summary-value="title"]'),
+      category: form.querySelector('[data-summary-value="category"]'),
+      location: form.querySelector('[data-summary-value="location"]'),
+      age: form.querySelector('[data-summary-value="age"]'),
+      price: form.querySelector('[data-summary-value="price"]'),
+      promotion: form.querySelector('[data-summary-value="promotion"]'),
+      retouch: form.querySelector('[data-summary-value="retouch"]'),
+      photos: form.querySelector('[data-summary-value="photos"]'),
+      total: form.querySelector('[data-summary-value="total"]')
+    };
+    const categoryGenderMap = {
+      Panie: 'Kobieta',
+      Panowie: 'Mężczyzna',
+      Pary: 'Para',
+      Trans: 'Trans',
+      Kluby: 'Klub / Firma'
+    };
+    let activeStep = 1;
+    let selectedPhotos = [];
+
+    function setStep(step) {
+      activeStep = Math.max(1, Math.min(step, panels.length));
+      panels.forEach((panel) => panel.classList.toggle('is-active', Number(panel.dataset.step) === activeStep));
+      tabs.forEach((tab) => {
+        const active = Number(tab.dataset.stepTab) === activeStep;
+        tab.classList.toggle('is-active', active);
+        tab.setAttribute('aria-selected', active ? 'true' : 'false');
+      });
+      startButton.disabled = activeStep === 1;
+      prevButton.disabled = activeStep === 1;
+      nextButton.hidden = activeStep === panels.length;
+    }
+
+    function showValidationMessage(message) {
+      const activePanel = panels.find((panel) => Number(panel.dataset.step) === activeStep);
+      let alert = activePanel.querySelector('[data-validation-message]');
+      if (!alert) {
+        alert = document.createElement('p');
+        alert.className = 'wizard-validation-message';
+        alert.dataset.validationMessage = '';
+        activePanel.prepend(alert);
+      }
+      alert.textContent = message;
+      alert.hidden = false;
+    }
+
+    function clearValidationMessage() {
+      panels.forEach((panel) => {
+        const alert = panel.querySelector('[data-validation-message]');
+        if (alert) alert.hidden = true;
+      });
+    }
+
+    function setCategory(category, options = {}) {
+      categorySelect.value = category;
+      categoryPills.forEach((pill) => {
+        const active = pill.dataset.categoryPill === category;
+        pill.classList.toggle('is-active', active);
+        pill.setAttribute('aria-pressed', active ? 'true' : 'false');
+      });
+      const gender = categoryGenderMap[category];
+      genderSelect.disabled = false;
+      if (gender) genderSelect.value = gender;
+      genderSelect.disabled = Boolean(gender);
+      updateSummary();
+      if (options.save !== false) saveForm();
+    }
+
+    function getSavableFields() {
+      return Array.from(form.elements).filter((field) => field.name && field.type !== 'file');
+    }
+
+    function saveForm() {
+      const data = {};
+      getSavableFields().forEach((field) => {
+        const key = field.name;
+        if (field.type === 'checkbox') {
+          if (key.endsWith('[]')) {
+            if (!data[key]) data[key] = [];
+            if (field.checked) data[key].push(field.value);
+          } else {
+            data[key] = field.checked;
+          }
+        } else if (field.type === 'radio') {
+          if (field.checked) data[key] = field.value;
+        } else {
+          data[key] = field.value;
+        }
+      });
+      localStorage.setItem(storageKey, JSON.stringify(data));
+    }
+
+    function restoreForm() {
+      const data = JSON.parse(localStorage.getItem(storageKey) || '{}');
+      getSavableFields().forEach((field) => {
+        if (!(field.name in data)) return;
+        const value = data[field.name];
+        if (field.type === 'checkbox') {
+          field.checked = Array.isArray(value) ? value.includes(field.value) : Boolean(value);
+        } else if (field.type === 'radio') {
+          field.checked = field.value === value;
+        } else {
+          field.value = value;
+        }
+      });
+      return data;
+    }
+
+    async function loadJson(url) {
+      const response = await fetch(url);
+      return response.ok ? response.json() : {};
+    }
+
+    function setOptions(select, values, placeholder, selectedValue = '') {
+      select.innerHTML = '';
+      const placeholderOption = new Option(placeholder, '');
+      placeholderOption.disabled = values.length === 0;
+      select.add(placeholderOption);
+      values.forEach((value) => select.add(new Option(value, value)));
+      select.disabled = values.length === 0;
+      if (selectedValue && values.includes(selectedValue)) select.value = selectedValue;
+    }
+
+    async function refreshCities(selectedValue = citySelect.dataset.selected || citySelect.value || '') {
+      const query = regionSelect.value ? `?region=${encodeURIComponent(regionSelect.value)}` : '';
+      const data = await loadJson(`/api/locations/cities${query}`);
+      setOptions(citySelect, data.cities || [], 'Wybierz miasto', selectedValue);
+      await refreshDistricts();
+    }
+
+    async function refreshDistricts(selectedValue = districtSelect.dataset.selected || districtSelect.value || '') {
+      if (!citySelect.value) {
+        setOptions(districtSelect, [], 'Najpierw wybierz miasto');
+        return;
+      }
+      const data = await loadJson(`/api/locations/districts?city=${encodeURIComponent(citySelect.value)}&region=${encodeURIComponent(regionSelect.value)}`);
+      setOptions(districtSelect, data.districts || [], 'Wybierz dzielnicę', selectedValue);
+    }
+
+    function syncPrices(source) {
+      if (source === priceMirror) priceSource.value = priceMirror.value;
+      else priceMirror.value = priceSource.value;
+      updateSummary();
+      saveForm();
+    }
+
+    function updatePreferenceCount() {
+      const count = form.querySelectorAll('[name="preferences[]"]:checked').length;
+      preferencesCount.textContent = String(count);
+    }
+
+    function filterPreferences() {
+      const query = preferenceSearch.value.trim().toLowerCase();
+      preferenceItems.forEach((item) => {
+        item.hidden = query && !item.textContent.toLowerCase().includes(query);
+      });
+    }
+
+    function syncPhotoInputFiles() {
+      const transfer = new DataTransfer();
+      selectedPhotos.forEach((item) => transfer.items.add(item.file));
+      photoInput.files = transfer.files;
+    }
+
+    function renderPhotoPreviews() {
+      photoPreviewSlider.innerHTML = '';
+      if (selectedPhotos.length === 0) {
+        const empty = document.createElement('p');
+        empty.className = 'empty-media';
+        empty.textContent = 'Wybrane zdjęcia pojawią się tutaj.';
+        photoPreviewSlider.append(empty);
+        return;
+      }
+      selectedPhotos.forEach((item, index) => {
+        const card = document.createElement('article');
+        card.className = 'media-preview-card';
+        card.innerHTML = `
+          <button class="remove-media" type="button" aria-label="Usuń zdjęcie">×</button>
+          <img alt="">
+          <div class="media-preview-body">
+            <strong></strong>
+            <label class="media-toggle"><input type="checkbox" data-tattoo-image><span>Usunięcie tatuażu</span><em>20 Spotycoinów</em></label>
+            <textarea name="tattooDescription[]" rows="3" placeholder="Opisz co zamazać" hidden></textarea>
+          </div>
+        `;
+        card.querySelector('img').src = item.url;
+        card.querySelector('img').alt = `Podgląd zdjęcia ${index + 1}`;
+        card.querySelector('strong').textContent = item.file.name;
+        const tattooToggle = card.querySelector('[data-tattoo-image]');
+        const tattooDescription = card.querySelector('textarea');
+        tattooToggle.checked = item.tattooRemoval;
+        tattooDescription.hidden = !item.tattooRemoval;
+        tattooToggle.addEventListener('change', () => {
+          item.tattooRemoval = tattooToggle.checked;
+          tattooDescription.hidden = !item.tattooRemoval;
+          updateCosts();
+        });
+        card.querySelector('.remove-media').addEventListener('click', () => {
+          URL.revokeObjectURL(item.url);
+          selectedPhotos.splice(index, 1);
+          syncPhotoInputFiles();
+          renderPhotoPreviews();
+          updateCosts();
+        });
+        photoPreviewSlider.append(card);
+      });
+    }
+
+    function updateCosts() {
+      const tattooCount = selectedPhotos.filter((item) => item.tattooRemoval).length;
+      const tattooCost = tattooCount * 20;
+      const promotion = promotionOptions.find((option) => option.checked);
+      const promotionCost = Number(promotion?.dataset.price || 0);
+      const total = tattooCost + promotionCost;
+      tattooInput.value = String(tattooCount);
+      photoCount.textContent = `Wybrano ${selectedPhotos.length} z 6 zdjęć`;
+      retouchTotal.textContent = String(tattooCost);
+      costTattoo.textContent = String(tattooCost);
+      costPromotion.textContent = String(promotionCost);
+      costTotal.textContent = String(total);
+      summary.total.textContent = String(total);
+      summary.retouch.textContent = String(tattooCost);
+      summary.promotion.textContent = promotion?.closest('.promotion-card')?.querySelector('span')?.textContent || 'Brak promocji';
+      summary.photos.textContent = String(selectedPhotos.length);
+    }
+
+    function updateSummary() {
+      const city = citySelect.value;
+      const region = regionSelect.value;
+      const price = priceSource.value;
+      summary.title.textContent = form.elements.title.value.trim() || '-';
+      summary.category.textContent = categorySelect.value || '-';
+      summary.location.textContent = [city, region].filter(Boolean).join(', ') || '-';
+      summary.age.textContent = form.elements.age.value ? `${form.elements.age.value} lat` : '-';
+      summary.price.textContent = price ? `${Number(price).toLocaleString('pl-PL')} PLN` : '-';
+      updateCosts();
+    }
+
+    function requiredMessage(field) {
+      const label = field.closest('label')?.childNodes?.[0]?.textContent?.trim() || 'To pole';
+      const messages = {
+        title: 'Podaj nazwę lub tytuł ogłoszenia.',
+        age: 'Podaj wiek.',
+        gender: 'Wybierz płeć.',
+        category: 'Wybierz kategorię.',
+        city: 'Wybierz miasto.',
+        region: 'Wybierz województwo.',
+        description: 'Dodaj opis ogłoszenia.',
+        price: 'Podaj cenę na godzinę.',
+        images: 'Dodaj minimum 3 zdjęcia.'
+      };
+      return messages[field.name] || `Uzupełnij pole: ${label}.`;
+    }
+
+    function validateStep(step) {
+      clearValidationMessage();
+      const panel = panels.find((item) => Number(item.dataset.step) === step);
+      const requiredFields = Array.from(panel.querySelectorAll('[required]')).filter((field) => !field.disabled);
+      const invalid = requiredFields.find((field) => !field.checkValidity());
+      if (invalid) {
+        invalid.focus();
+        showValidationMessage(requiredMessage(invalid));
+        return false;
+      }
+      if (step === 3 && selectedPhotos.length < 3) {
+        photoCount.textContent = 'Dodaj minimum 3 zdjęcia.';
+        showValidationMessage('Dodaj minimum 3 zdjęcia przed publikacją.');
+        photoInput.focus();
+        return false;
+      }
+      if (step === 3 && selectedPhotos.length > 6) {
+        photoCount.textContent = 'Możesz dodać maksymalnie 6 zdjęć.';
+        showValidationMessage('Możesz dodać maksymalnie 6 zdjęć.');
+        photoInput.focus();
+        return false;
+      }
+      return true;
+    }
+
+    function findInvalidStep() {
+      for (const panel of panels) {
+        const step = Number(panel.dataset.step);
+        const requiredFields = Array.from(panel.querySelectorAll('[required]')).filter((field) => !field.disabled);
+        const invalid = requiredFields.find((field) => !field.checkValidity());
+        if (invalid) return { step, message: requiredMessage(invalid), field: invalid };
+      }
+      if (selectedPhotos.length < 3 || selectedPhotos.length > 6) {
+        return {
+          step: 3,
+          message: selectedPhotos.length < 3 ? 'Dodaj minimum 3 zdjęcia przed publikacją.' : 'Możesz dodać maksymalnie 6 zdjęć.',
+          field: photoInput
+        };
+      }
+      return null;
+    }
+
+    tabs.forEach((tab) => tab.addEventListener('click', () => setStep(Number(tab.dataset.stepTab))));
+    categoryPills.forEach((pill) => pill.addEventListener('click', () => setCategory(pill.dataset.categoryPill)));
+    categorySelect.addEventListener('change', () => setCategory(categorySelect.value));
+    regionSelect.addEventListener('change', async () => {
+      citySelect.dataset.selected = '';
+      districtSelect.dataset.selected = '';
+      await refreshCities('');
+      updateSummary();
+      saveForm();
+    });
+    citySelect.addEventListener('change', async () => {
+      districtSelect.dataset.selected = '';
+      await refreshDistricts('');
+      updateSummary();
+      saveForm();
+    });
+    districtSelect.addEventListener('change', saveForm);
+    priceSource.addEventListener('input', () => syncPrices(priceSource));
+    priceMirror.addEventListener('input', () => syncPrices(priceMirror));
+    form.querySelector('[data-toggle-prices]').addEventListener('click', () => {
+      extraPrices.hidden = !extraPrices.hidden;
+    });
+    preferenceSearch.addEventListener('input', filterPreferences);
+    form.addEventListener('input', () => {
+      updatePreferenceCount();
+      updateSummary();
+      saveForm();
+    });
+    form.addEventListener('change', () => {
+      updatePreferenceCount();
+      updateSummary();
+      saveForm();
+    });
+    photoInput.addEventListener('change', () => {
+      const incomingFiles = Array.from(photoInput.files || []);
+      const availableSlots = Math.max(0, 6 - selectedPhotos.length);
+      const acceptedFiles = incomingFiles.slice(0, availableSlots);
+      const rejectedCount = incomingFiles.length - acceptedFiles.length;
+      selectedPhotos = selectedPhotos.concat(acceptedFiles.map((file) => ({
+        file,
+        url: URL.createObjectURL(file),
+        tattooRemoval: false
+      })));
+      syncPhotoInputFiles();
+      renderPhotoPreviews();
+      updateCosts();
+      if (rejectedCount > 0) photoCount.textContent = 'Możesz dodać maksymalnie 6 zdjęć.';
+    });
+    videoInput.addEventListener('change', () => {
+      const file = videoInput.files?.[0];
+      videoFile.textContent = file ? `Wybrano: ${file.name}` : 'Nie wybrano pliku wideo.';
+    });
+    promotionOptions.forEach((option) => option.addEventListener('change', updateCosts));
+    startButton.addEventListener('click', () => setStep(1));
+    prevButton.addEventListener('click', () => setStep(activeStep - 1));
+    nextButton.addEventListener('click', () => {
+      if (!validateStep(activeStep)) return;
+      setStep(activeStep + 1);
+    });
+    form.addEventListener('submit', (event) => {
+      genderSelect.disabled = false;
+      const invalid = findInvalidStep();
+      if (invalid) {
+        event.preventDefault();
+        setStep(invalid.step);
+        showValidationMessage(invalid.message);
+        invalid.field?.focus();
+        setCategory(categorySelect.value || 'Panie', { save: false });
+        return;
+      }
+      localStorage.removeItem(storageKey);
+    });
+
+    const restoredData = restoreForm();
+    citySelect.dataset.selected = restoredData.city || citySelect.value;
+    districtSelect.dataset.selected = restoredData.district || districtSelect.value;
+    setCategory(categorySelect.value || 'Panie', { save: false });
+    priceMirror.value = priceSource.value;
+    refreshCities(citySelect.dataset.selected).then(() => refreshDistricts(districtSelect.dataset.selected));
+    renderPhotoPreviews();
+    updatePreferenceCount();
+    setStep(1);
+    updateSummary();
+  })();
+</script>
+<%- include('../partials/footer') %>

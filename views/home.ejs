@@ -1,0 +1,289 @@
+<%- include('partials/header') %>
+
+<%
+  const promotedListings = listings.filter((listing) => listing.is_promoted);
+  const latestListings = [...listings]
+    .sort((a, b) => new Date(b.created_at) - new Date(a.created_at))
+    .slice(0, 7);
+  const selectedCity = (filters.city || searchFilters.city || '').trim();
+  const selectedRegion = filters.region || '';
+  const nearbyListings = [...listings]
+    .filter((listing) => listing.city)
+    .sort((a, b) => {
+      const aCity = selectedCity && a.city === selectedCity ? 0 : 1;
+      const bCity = selectedCity && b.city === selectedCity ? 0 : 1;
+      if (aCity !== bCity) return aCity - bCity;
+      const aRegion = selectedRegion && a.region === selectedRegion ? 0 : 1;
+      const bRegion = selectedRegion && b.region === selectedRegion ? 0 : 1;
+      if (aRegion !== bRegion) return aRegion - bRegion;
+      return new Date(b.created_at) - new Date(a.created_at);
+    })
+    .slice(0, 35);
+  const fallbackListings = listings.slice(0, 4);
+  const promotedItems = promotedListings.length ? promotedListings : fallbackListings;
+  const promotedDesktopItems = promotedItems.slice(0, 21);
+  const promotedDesktopSlides = [0, 1, 2].map((slide) => promotedDesktopItems.slice(slide * 7, slide * 7 + 7));
+  const promotedMobileItems = promotedItems.slice(0, 18);
+  const promotedMobileSlides = [0, 1, 2].map((slide) => promotedMobileItems.slice(slide * 6, slide * 6 + 6));
+  const listingSections = [
+    { title: 'Ogłoszenia w Twojej okolicy', items: nearbyListings.length ? nearbyListings : fallbackListings }
+  ];
+  const popularCities = ['Warszawa', 'Kraków', 'Wrocław', 'Poznań', 'Gdańsk', 'Szczecin', 'Bydgoszcz', 'Białystok', 'Lublin', 'Katowice', 'Gryfice', 'Łódź'];
+%>
+
+<section class="hero home-hero">
+  <div class="hero-center">
+    <h1>Wyszukaj ogłoszenia</h1>
+    <form class="hero-search" action="/" method="get" data-location-search>
+      <label>
+        <span>Kraj</span>
+        <select name="country">
+          <option value="Polska">Polska</option>
+        </select>
+      </label>
+      <label>
+        <span>Województwo</span>
+        <select name="region" data-region-select>
+          <option value="">Wszystkie</option>
+          <% regiony.forEach((region) => { %>
+            <option value="<%= region %>" <%= filters.region === region ? 'selected' : '' %>><%= region %></option>
+          <% }) %>
+        </select>
+      </label>
+      <label>
+        <span>Miasto</span>
+        <select name="city" data-city-select data-selected="<%= filters.city || '' %>">
+          <option value="">Najpierw wybierz województwo</option>
+        </select>
+      </label>
+      <label>
+        <span>Dzielnica</span>
+        <select name="district" data-district-select data-selected="<%= filters.district || '' %>">
+          <option value="">Najpierw wybierz miasto</option>
+        </select>
+      </label>
+      <button class="button search-button" type="submit">Szukaj</button>
+    </form>
+  </div>
+</section>
+
+<script>
+  (() => {
+    const form = document.querySelector('[data-location-search]');
+    if (!form) return;
+    const region = form.querySelector('[data-region-select]');
+    const city = form.querySelector('[data-city-select]');
+    const district = form.querySelector('[data-district-select]');
+
+    async function loadJson(url) {
+      const response = await fetch(url);
+      return response.ok ? response.json() : {};
+    }
+
+    function setOptions(select, values, placeholder, selectedValue = '') {
+      select.innerHTML = '';
+      const placeholderOption = new Option(placeholder, '');
+      placeholderOption.disabled = values.length === 0;
+      select.add(placeholderOption);
+      values.forEach((value) => select.add(new Option(value, value)));
+      select.disabled = values.length === 0;
+      if (selectedValue && values.includes(selectedValue)) select.value = selectedValue;
+    }
+
+    async function refreshCities(selectedValue = city.dataset.selected || '') {
+      const query = region.value ? `?region=${encodeURIComponent(region.value)}` : '';
+      const data = await loadJson(`/api/locations/cities${query}`);
+      setOptions(city, data.cities || [], region.value ? 'Wybierz miasto' : 'Najpierw wybierz województwo', selectedValue);
+      await refreshDistricts();
+    }
+
+    async function refreshDistricts(selectedValue = district.dataset.selected || '') {
+      if (!city.value) {
+        setOptions(district, [], 'Najpierw wybierz miasto');
+        return;
+      }
+      const data = await loadJson(`/api/locations/districts?city=${encodeURIComponent(city.value)}&region=${encodeURIComponent(region.value)}`);
+      setOptions(district, data.districts || [], 'Wybierz dzielnicę', selectedValue);
+    }
+
+    region.addEventListener('change', () => {
+      city.dataset.selected = '';
+      district.dataset.selected = '';
+      refreshCities('');
+    });
+    city.addEventListener('change', () => {
+      district.dataset.selected = '';
+      refreshDistricts('');
+    });
+    refreshCities();
+  })();
+</script>
+
+<section class="section cities-section">
+  <div class="section-head simple">
+    <h2>Popularne Miasta</h2>
+  </div>
+  <div class="city-grid">
+    <% popularCities.forEach((city) => { %>
+      <a href="/?city=<%= encodeURIComponent(city) %>"><%= city %></a>
+    <% }) %>
+  </div>
+</section>
+
+<section class="promoted-fullwidth">
+  <div class="promoted-inner">
+    <div class="section-head simple">
+      <h2>🔥 Promowane ogłoszenia</h2>
+    </div>
+    <% if (promotedItems.length === 0) { %>
+      <div class="empty">Brak ogłoszeń dla wybranych filtrów.</div>
+    <% } %>
+    <div class="promoted-slider promoted-desktop" data-promoted-slider>
+      <div class="promoted-viewport">
+        <div class="promoted-slide-track" data-promoted-track>
+          <% promotedDesktopSlides.forEach((slideItems, slideIndex) => { %>
+            <div class="promoted-slide" aria-label="Promowane ogłoszenia, slajd <%= slideIndex + 1 %>">
+              <% slideItems.forEach((listing, index) => { %>
+                <%- include('partials/profileCard', { listing, cardId: `promoted-${slideIndex}-${index}-${listing.id}` }) %>
+              <% }) %>
+            </div>
+          <% }) %>
+        </div>
+      </div>
+      <div class="promoted-controls">
+        <button type="button" aria-label="Poprzedni slajd" data-promoted-prev>‹</button>
+        <div class="promoted-dots" aria-label="Wybierz slajd">
+          <% [0, 1, 2].forEach((dot) => { %>
+            <button class="<%= dot === 0 ? 'is-active' : '' %>" type="button" data-promoted-dot="<%= dot %>" aria-label="Slajd <%= dot + 1 %>"><%= dot + 1 %></button>
+          <% }) %>
+        </div>
+        <button type="button" aria-label="Następny slajd" data-promoted-next>›</button>
+      </div>
+    </div>
+    <div class="promoted-slider promoted-mobile" data-promoted-slider>
+      <div class="promoted-viewport">
+        <div class="promoted-slide-track" data-promoted-track>
+          <% promotedMobileSlides.forEach((slideItems, slideIndex) => { %>
+            <div class="promoted-slide" aria-label="Promowane ogłoszenia, slajd <%= slideIndex + 1 %>">
+              <% slideItems.forEach((listing, index) => { %>
+                <%- include('partials/profileCard', { listing, cardId: `promoted-mobile-${slideIndex}-${index}-${listing.id}` }) %>
+              <% }) %>
+            </div>
+          <% }) %>
+        </div>
+      </div>
+      <div class="promoted-controls">
+        <button type="button" aria-label="Poprzedni slajd" data-promoted-prev>‹</button>
+        <div class="promoted-dots" aria-label="Wybierz slajd">
+          <% [0, 1, 2].forEach((dot) => { %>
+            <button class="<%= dot === 0 ? 'is-active' : '' %>" type="button" data-promoted-dot="<%= dot %>" aria-label="Slajd <%= dot + 1 %>"><%= dot + 1 %></button>
+          <% }) %>
+        </div>
+        <button type="button" aria-label="Następny slajd" data-promoted-next>›</button>
+      </div>
+    </div>
+  </div>
+</section>
+
+<section class="section listing-strip-section">
+  <div class="section-head simple">
+    <h2>Najnowsze ogłoszenia</h2>
+  </div>
+  <% if (latestListings.length === 0) { %>
+    <div class="empty">Brak ogłoszeń dla wybranych filtrów.</div>
+  <% } %>
+  <div class="listing-strip latest-grid">
+    <% latestListings.forEach((listing, index) => { %>
+      <%- include('partials/profileCard', { listing, cardId: `latest-${index}-${listing.id}` }) %>
+    <% }) %>
+  </div>
+</section>
+
+<% listingSections.forEach((section) => { %>
+  <section class="section listing-strip-section">
+    <div class="section-head simple">
+      <h2><%= section.title %></h2>
+    </div>
+    <% if (section.items.length === 0) { %>
+      <div class="empty">Brak ogłoszeń dla wybranych filtrów.</div>
+    <% } %>
+    <div class="listing-strip">
+      <% section.items.forEach((listing, index) => { %>
+        <%- include('partials/profileCard', { listing, cardId: `nearby-${index}-${listing.id}` }) %>
+      <% }) %>
+    </div>
+  </section>
+<% }) %>
+
+<div class="profile-modal-layer" aria-live="polite">
+  <% promotedDesktopSlides.forEach((slideItems, slideIndex) => { %>
+    <% slideItems.forEach((listing, index) => { %>
+      <%- include('partials/profileInfoModal', { listing, cardId: `promoted-${slideIndex}-${index}-${listing.id}` }) %>
+    <% }) %>
+  <% }) %>
+  <% promotedMobileSlides.forEach((slideItems, slideIndex) => { %>
+    <% slideItems.forEach((listing, index) => { %>
+      <%- include('partials/profileInfoModal', { listing, cardId: `promoted-mobile-${slideIndex}-${index}-${listing.id}` }) %>
+    <% }) %>
+  <% }) %>
+  <% latestListings.forEach((listing, index) => { %>
+    <%- include('partials/profileInfoModal', { listing, cardId: `latest-${index}-${listing.id}` }) %>
+  <% }) %>
+  <% listingSections.forEach((section) => { %>
+    <% section.items.forEach((listing, index) => { %>
+      <%- include('partials/profileInfoModal', { listing, cardId: `nearby-${index}-${listing.id}` }) %>
+    <% }) %>
+  <% }) %>
+</div>
+
+<script>
+  (() => {
+    document.querySelectorAll('[data-promoted-slider]').forEach((slider) => {
+      const track = slider.querySelector('[data-promoted-track]');
+      const dots = Array.from(slider.querySelectorAll('[data-promoted-dot]'));
+      const prev = slider.querySelector('[data-promoted-prev]');
+      const next = slider.querySelector('[data-promoted-next]');
+      let activeSlide = 0;
+
+      function setSlide(index) {
+        activeSlide = (index + dots.length) % dots.length;
+        track.style.transform = `translateX(-${activeSlide * 100}%)`;
+        dots.forEach((dot, dotIndex) => {
+          dot.classList.toggle('is-active', dotIndex === activeSlide);
+        });
+      }
+
+      dots.forEach((dot) => dot.addEventListener('click', () => setSlide(Number(dot.dataset.promotedDot))));
+      prev.addEventListener('click', () => setSlide(activeSlide - 1));
+      next.addEventListener('click', () => setSlide(activeSlide + 1));
+      setSlide(0);
+    });
+
+    function syncModalScrollLock() {
+      document.body.classList.toggle('modal-open', Boolean(document.querySelector('.profile-info-modal:not([hidden])')));
+    }
+
+    document.addEventListener('click', (event) => {
+      const trigger = event.target.closest('[data-modal-target]');
+      if (trigger) {
+        const modal = document.getElementById(trigger.dataset.modalTarget);
+        if (modal) modal.hidden = false;
+        syncModalScrollLock();
+        return;
+      }
+      if (event.target.matches('[data-modal-close]') || event.target.classList.contains('profile-info-modal')) {
+        event.target.closest('.profile-info-modal').hidden = true;
+        syncModalScrollLock();
+      }
+    });
+    document.addEventListener('keydown', (event) => {
+      if (event.key !== 'Escape') return;
+      document.querySelectorAll('.profile-info-modal:not([hidden])').forEach((modal) => {
+        modal.hidden = true;
+      });
+      syncModalScrollLock();
+    });
+  })();
+</script>
+
+<%- include('partials/footer') %>

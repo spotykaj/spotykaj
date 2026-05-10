@@ -1,0 +1,37 @@
+<%- include('../partials/header') %>
+<section class="user-dashboard-shell">
+  <%- include('../partials/userPanelSidebar', { activePanel }) %>
+
+  <div class="user-dashboard-content">
+    <header class="dashboard-welcome-card">
+      <div>
+        <p class="eyebrow">Zapisane</p>
+        <h1>Ulubione</h1>
+        <p>Ogłoszenia zapisane do szybkiego powrotu.</p>
+      </div>
+    </header>
+
+    <section class="dashboard-panel-card">
+      <div class="panel-listing-grid">
+        <% favorites.forEach((listing) => { %>
+          <article class="panel-listing-card">
+            <a href="/ogloszenia/<%= listing.id %>">
+              <img src="<%= listing.cover || '/uploads/demo-market.svg' %>" alt="<%= listing.title %>" loading="lazy" decoding="async">
+            </a>
+            <div>
+              <h2><a href="/ogloszenia/<%= listing.id %>"><%= listing.title %></a></h2>
+              <p><%= listing.city %><%= listing.region ? ', ' + listing.region : '' %></p>
+              <% if (listing.is_promoted) { %><span class="pill promoted">Promowane</span><% } %>
+              <form action="/ogloszenia/<%= listing.id %>/ulubione" method="post">
+                <input type="hidden" name="returnTo" value="/panel/favorites">
+                <button class="ghost" type="submit">Usuń z ulubionych</button>
+              </form>
+            </div>
+          </article>
+        <% }) %>
+      </div>
+      <% if (!favorites.length) { %><div class="empty">Nie masz jeszcze ulubionych ogłoszeń.</div><% } %>
+    </section>
+  </div>
+</section>
+<%- include('../partials/footer') %>

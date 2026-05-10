@@ -1,0 +1,46 @@
+<%
+  function parseDemoDetails(description) {
+    const details = {
+      age: '',
+      preferences: '',
+      languages: '',
+      verified: false
+    };
+    String(description || '').split('\n').forEach((line) => {
+      const separator = line.indexOf(':');
+      if (separator === -1) return;
+      const key = line.slice(0, separator).trim().toLowerCase();
+      const value = line.slice(separator + 1).trim();
+      if (key === 'wiek') details.age = value;
+      if (key === 'preferencje') details.preferences = value;
+      if (key === 'języki' || key === 'jezyki') details.languages = value;
+      if (key === 'zweryfikowana' || key === 'zweryfikowany' || key === 'weryfikacja') details.verified = value.toLowerCase() === 'tak';
+    });
+    return details;
+  }
+  const details = parseDemoDetails(listing.description);
+  const username = listing.title;
+  const authorName = listing.author_name || `Użytkownik ${listing.user_id}`;
+  const promoted = Boolean(listing.is_promoted);
+  const verified = Boolean(details.verified || Number(listing.owner_verified || 0));
+%>
+
+<article class="adult-profile-card <%= promoted ? 'is-promoted' : '' %>">
+  <a class="adult-profile-link" href="/ogloszenia/<%= listing.id %>" aria-label="<%= username %>">
+    <img src="<%= listing.cover || '/uploads/demo-profiles/profile-01.svg' %>" alt="<%= username %>" loading="lazy" decoding="async">
+    <% if (promoted) { %><span class="status-chip promoted adult-card-promoted-badge">★ Promowane</span><% } %>
+    <div class="adult-card-overlay">
+      <h3><%= username %><% if (verified) { %><span class="inline-verified-check" aria-label="Profil zweryfikowany">✓</span><% } %></h3>
+      <span class="adult-card-author">Sprzedający: <%= authorName %></span>
+      <p><%= listing.city %><% if (details.age) { %>, <%= details.age %> lat<% } %></p>
+    </div>
+  </a>
+  <% if (typeof user !== 'undefined' && user) { %>
+    <form class="adult-card-favorite-form" action="/ogloszenia/<%= listing.id %>/ulubione" method="post">
+      <button class="adult-card-favorite" type="submit" aria-label="Dodaj lub usuń z ulubionych">♡</button>
+    </form>
+  <% } else { %>
+    <a class="adult-card-favorite" href="/logowanie" aria-label="Zaloguj się, aby dodać do ulubionych">♡</a>
+  <% } %>
+  <button class="profile-help-button" type="button" data-modal-target="<%= cardId %>" aria-label="Szczegóły ogłoszenia">?</button>
+</article>

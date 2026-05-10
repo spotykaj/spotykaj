@@ -1,0 +1,12 @@
+<aside class="user-dashboard-sidebar" aria-label="Nawigacja panelu">
+  <a class="<%= activePanel === 'panel' ? 'is-active' : '' %>" href="/panel">Panel</a>
+  <a href="/ogloszenia/nowe">Dodaj ogłoszenie</a>
+  <a class="<%= activePanel === 'profile' ? 'is-active' : '' %>" href="/panel/profile">Mój profil</a>
+  <a class="<%= activePanel === 'messages' ? 'is-active' : '' %>" href="/panel/messages">Wiadomości</a>
+  <a class="<%= activePanel === 'favorites' ? 'is-active' : '' %>" href="/panel/favorites">Ulubione</a>
+  <a href="/kup-spotycoiny">Kup Spotycoiny</a>
+  <a class="<%= activePanel === 'spotycoins' ? 'is-active' : '' %>" href="/panel/spotycoins/history">Historia Spotycoinów</a>
+  <a class="<%= activePanel === 'tips' ? 'is-active' : '' %>" href="/panel/tips/history">Historia napiwków</a>
+  <a class="<%= activePanel === 'verification' ? 'is-active' : '' %>" href="/panel/weryfikacja">Weryfikacja konta</a>
+  <form action="/wyloguj" method="post"><button type="submit">Wyloguj</button></form>
+</aside>

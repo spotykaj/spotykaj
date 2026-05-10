@@ -1,0 +1,70 @@
+  </main>
+  <footer class="footer">
+    <span>© 2026 Spotykaj.com</span>
+    <span>Dyskretne ogłoszenia dla dorosłych użytkowników</span>
+    <span>Operator: Spotykaj LTD</span>
+    <nav aria-label="Linki prawne">
+      <a href="/regulamin">Regulamin</a>
+      <a href="/polityka-prywatnosci">Polityka prywatności</a>
+      <a href="/zasady-zdjec">Zasady zdjęć</a>
+    </nav>
+  </footer>
+  <%- include('antiTraffickingBar') %>
+  <% if (!isLegalPage) { %>
+    <div class="age-gate" data-age-gate hidden>
+      <div class="age-gate-panel" role="dialog" aria-modal="true" aria-labelledby="age-gate-title">
+        <p class="eyebrow">18+</p>
+        <h2 id="age-gate-title">Serwis tylko dla osób pełnoletnich</h2>
+        <p>Spotykaj.com zawiera treści przeznaczone wyłącznie dla osób, które ukończyły 18 lat. Potwierdź, że jesteś osobą pełnoletnią.</p>
+        <div class="age-gate-actions">
+          <button class="button" type="button" data-age-confirm>Mam 18+ lat — wchodzę</button>
+          <button class="ghost" type="button" data-age-decline>Nie mam 18 lat — opuść stronę</button>
+        </div>
+      </div>
+    </div>
+  <% } %>
+  <% if (turnstile && turnstile.enabled) { %>
+    <script src="https://challenges.cloudflare.com/turnstile/v0/api.js" async defer></script>
+  <% } %>
+  <% if (!isLegalPage) { %>
+    <script>
+      (() => {
+        const gate = document.querySelector('[data-age-gate]');
+        if (!gate) return;
+        const key = 'spotykaj_age_verified';
+        const maxAge = 30 * 24 * 60 * 60 * 1000;
+
+        function isVerified() {
+          try {
+            const stored = JSON.parse(localStorage.getItem(key) || 'null');
+            return stored && stored.value === true && Date.now() - Number(stored.timestamp || 0) < maxAge;
+          } catch (error) {
+            return document.cookie.includes(`${key}=true`);
+          }
+        }
+
+        function lockPage(lock) {
+          document.body.classList.toggle('age-gate-open', lock);
+        }
+
+        if (!isVerified()) {
+          gate.hidden = false;
+          lockPage(true);
+        }
+
+        gate.querySelector('[data-age-confirm]')?.addEventListener('click', () => {
+          const expires = new Date(Date.now() + maxAge).toUTCString();
+          localStorage.setItem(key, JSON.stringify({ value: true, timestamp: Date.now() }));
+          document.cookie = `${key}=true; expires=${expires}; path=/; SameSite=Lax`;
+          gate.hidden = true;
+          lockPage(false);
+        });
+
+        gate.querySelector('[data-age-decline]')?.addEventListener('click', () => {
+          window.location.href = 'https://www.google.com';
+        });
+      })();
+    </script>
+  <% } %>
+</body>
+</html>

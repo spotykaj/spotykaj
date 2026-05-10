@@ -1,0 +1,19 @@
+<%- include('../partials/header') %>
+<section class="section compact">
+  <div class="message-detail-card">
+    <a class="ghost back-link" href="/panel">Wróć do panelu</a>
+    <p class="eyebrow">Wiadomość prywatna</p>
+    <h1><%= message.listing_title %></h1>
+    <dl class="profile-detail-list">
+      <div><dt>Nadawca</dt><dd><%= message.sender_name %> · <%= message.sender_email %></dd></div>
+      <div><dt>Odbiorca</dt><dd><%= message.receiver_name %> · <%= message.receiver_email %></dd></div>
+      <div><dt>Data</dt><dd><%= new Date(message.created_at).toLocaleString('pl-PL') %></dd></div>
+      <div><dt>Koszt</dt><dd><%= Number(message.cost_spotycoins || 0).toLocaleString('pl-PL') %> Spotycoinów</dd></div>
+      <div><dt>Status</dt><dd><%= Number(message.is_read) ? 'Przeczytana' : 'Nieprzeczytana' %></dd></div>
+    </dl>
+    <div class="message-body-box">
+      <%= message.body %>
+    </div>
+  </div>
+</section>
+<%- include('../partials/footer') %>

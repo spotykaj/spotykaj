@@ -1,0 +1,57 @@
+<!doctype html>
+<html lang="pl">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title><%= title %> | Spotykaj</title>
+  <meta name="description" content="<%= typeof metaDescription !== 'undefined' ? metaDescription : 'Spotykaj - moderowane ogłoszenia dla dorosłych użytkowników w Polsce.' %>">
+  <link rel="canonical" href="<%= typeof canonicalUrl !== 'undefined' ? canonicalUrl : 'https://spotykaj.pl/' %>">
+  <meta property="og:title" content="<%= title %> | Spotykaj">
+  <meta property="og:description" content="<%= typeof metaDescription !== 'undefined' ? metaDescription : 'Moderowane ogłoszenia Spotykaj.' %>">
+  <meta property="og:type" content="<%= typeof ogType !== 'undefined' ? ogType : 'website' %>">
+  <meta property="og:url" content="<%= typeof canonicalUrl !== 'undefined' ? canonicalUrl : 'https://spotykaj.pl/' %>">
+  <% if (typeof ogImage !== 'undefined' && ogImage) { %><meta property="og:image" content="<%= ogImage %>"><% } %>
+  <link rel="stylesheet" href="/css/styles.css?v=2026051002">
+</head>
+<body>
+  <header class="site-header">
+    <div class="mini-bar">
+      <nav class="mini-links" aria-label="Wyróżnione linki">
+        <a href="/?q=video">Ogłoszenia z video</a>
+        <a href="/?q=odkryta+twarz">Ogłoszenia z odkrytą twarzą</a>
+      </nav>
+      <nav class="mini-links mini-links-right" aria-label="Ustawienia">
+        <a href="/kup-spotycoiny">Kup Spotycoiny</a>
+        <a href="/">PL</a>
+        <a href="/?lang=en">EN</a>
+      </nav>
+    </div>
+    <div class="main-navbar">
+      <a class="brand-logo" href="/" aria-label="Spotykaj">
+        <img src="/uploads/Logo%20white.png" alt="Spotykaj">
+      </a>
+      <nav class="nav" aria-label="Główna nawigacja">
+        <a class="button small add-listing" href="/ogloszenia/nowe">+ Dodaj ogłoszenie</a>
+        <% if (user) { %>
+          <form action="/wyloguj" method="post">
+            <button class="link-button dark" type="submit">Wyloguj</button>
+          </form>
+          <a href="/panel">Panel</a>
+          <% if (user.role === 'admin') { %><a href="/admin">Admin</a><% } %>
+          <% if (user.role === 'moderator' || user.role === 'admin') { %><a href="/moderator">Moderator</a><% } %>
+        <% } else { %>
+          <a href="/logowanie">Zaloguj</a>
+        <% } %>
+      </nav>
+    </div>
+    <nav class="category-nav" aria-label="Kategorie">
+      <a class="<%= !searchFilters.category ? 'is-active' : '' %>" href="/">Wszystkie</a>
+      <% ['Panie', 'Panowie', 'Kluby', 'Pary', 'Trans', 'Masaż', 'BDSM', 'Onlyfans', 'Pokazy/Sex telefon', 'Gej/Les', 'Filmy'].forEach((category) => { %>
+        <a class="<%= searchFilters.category === category ? 'is-active' : '' %>" href="/?category=<%= encodeURIComponent(category) %>"><%= category %></a>
+      <% }) %>
+    </nav>
+  </header>
+  <% if (flash) { %>
+    <div class="flash <%= flash.type %>"><%= flash.message %></div>
+  <% } %>
+  <main>

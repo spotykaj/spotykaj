@@ -1,0 +1,62 @@
+<%- include('../partials/header') %>
+<%
+  const verified = Number(user.profile_verified || 0) === 1;
+  const verificationStatus = verified
+    ? 'approved'
+    : (verificationRequest && verificationRequest.status === 'pending' ? 'pending' : (verificationRequest && verificationRequest.status === 'rejected' ? 'rejected' : 'none'));
+%>
+<section class="user-dashboard-shell">
+  <%- include('../partials/userPanelSidebar', { activePanel }) %>
+
+  <div class="user-dashboard-content">
+    <header class="dashboard-welcome-card">
+      <div>
+        <p class="eyebrow">Weryfikacja konta</p>
+        <h1>Weryfikacja konta</h1>
+        <p>Prześlij dokument oraz selfie z kartką Spotykaj, dzisiejszą datą i loginem.</p>
+      </div>
+      <a class="ghost button-like" href="/panel">Wróć do panelu</a>
+    </header>
+
+    <% if (verificationStatus === 'approved') { %>
+      <div class="verification-status-box is-success">
+        <strong>Konto zweryfikowane</strong>
+        <span>Twój profil ma aktywną odznakę zaufania.</span>
+      </div>
+    <% } else if (verificationStatus === 'pending') { %>
+      <div class="verification-status-box is-pending">
+        <strong>Weryfikacja w trakcie sprawdzania</strong>
+        <span>Administrator sprawdza przesłane dokumenty.</span>
+      </div>
+    <% } else if (verificationStatus === 'rejected') { %>
+      <div class="verification-status-box is-rejected">
+        <strong>Weryfikacja odrzucona</strong>
+        <span><%= verificationRequest.reviewer_note || 'Możesz przesłać dokumenty ponownie.' %></span>
+      </div>
+    <% } %>
+
+    <% if (verificationStatus === 'none' || verificationStatus === 'rejected') { %>
+      <form class="dashboard-panel-card verification-request-form" action="/panel/weryfikacja" method="post" enctype="multipart/form-data">
+        <div class="dashboard-card-head">
+          <div>
+            <p class="eyebrow">Dokumenty</p>
+            <h2>Wyślij do weryfikacji</h2>
+          </div>
+        </div>
+        <p>Aby zweryfikować profil, prześlij zdjęcie dokumentu oraz selfie z kartką. Na kartce napisz: Spotykaj, dzisiejszą datę oraz swój login.</p>
+        <label>Zdjęcie dokumentu / dowodu
+          <input type="file" name="document" accept=".jpg,.jpeg,.png,.webp,image/jpeg,image/png,image/webp" required>
+        </label>
+        <label>Selfie z kartką Spotykaj + data
+          <input type="file" name="selfie" accept=".jpg,.jpeg,.png,.webp,image/jpeg,image/png,image/webp" required>
+        </label>
+        <label>Uwagi
+          <textarea name="note" rows="4" maxlength="500"></textarea>
+        </label>
+        <%- include('../partials/turnstile') %>
+        <button class="button" type="submit">Wyślij do weryfikacji</button>
+      </form>
+    <% } %>
+  </div>
+</section>
+<%- include('../partials/footer') %>

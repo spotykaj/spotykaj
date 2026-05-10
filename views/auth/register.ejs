@@ -1,0 +1,44 @@
+<%- include('../partials/header') %>
+<section class="auth-shell">
+  <form class="form-card registration-card" action="/rejestracja" method="post">
+    <div class="auth-card-head">
+      <p class="eyebrow">Nowe konto</p>
+      <h1>Rejestracja</h1>
+    </div>
+    <div class="registration-grid">
+      <label>Nazwa użytkownika
+        <input name="username" required minlength="3" maxlength="30" pattern="[A-Za-z0-9_-]+" autocomplete="username">
+        <span class="helper-text">Ta nazwa będzie widoczna przy Twoich ogłoszeniach.</span>
+      </label>
+      <label>Imię i nazwisko
+        <input name="full_name" required autocomplete="name">
+        <span class="helper-text">Widoczne tylko dla Ciebie i administracji.</span>
+      </label>
+      <label>E-mail
+        <input type="email" name="email" required autocomplete="email">
+      </label>
+      <label>Rodzaj konta
+        <select name="account_type" required>
+          <option value="">Wybierz rodzaj konta</option>
+          <option value="prywatne">Konto prywatne</option>
+          <option value="agencja">Agencja</option>
+          <option value="salon_masazu">Salon masażu</option>
+        </select>
+      </label>
+      <label>Hasło
+        <input type="password" name="password" minlength="6" required autocomplete="new-password">
+      </label>
+      <label>Powtórz hasło
+        <input type="password" name="password_confirmation" minlength="6" required autocomplete="new-password">
+      </label>
+    </div>
+    <label class="checkbox-row">
+      <input type="checkbox" name="legal_acceptance" required>
+      <span>Oświadczam, że mam ukończone 18 lat i akceptuję Regulamin oraz Politykę prywatności.</span>
+    </label>
+    <%- include('../partials/turnstile') %>
+    <button class="button" type="submit">Utwórz konto</button>
+    <p>Masz już konto? <a href="/logowanie">Zaloguj się</a>.</p>
+  </form>
+</section>
+<%- include('../partials/footer') %>

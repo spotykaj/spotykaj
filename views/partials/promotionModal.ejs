@@ -1,0 +1,39 @@
+<%
+  const modalId = `promotion-modal-${listing.id}`;
+  const activePromotion = Boolean(listing.is_promoted);
+%>
+<div class="promotion-status-line">
+  <% if (activePromotion) { %>
+    <span>Promowane do: <strong><%= listing.promotion_expires_text %></strong></span>
+    <span>Pozostało: <strong><%= listing.promotion_remaining_text %></strong></span>
+  <% } else { %>
+    <span>Promowanie nieaktywne</span>
+  <% } %>
+</div>
+<button class="ghost promotion-open-button" type="button" data-promotion-open="<%= modalId %>">
+  <%= activePromotion ? 'Przedłuż promowanie' : 'Promuj ogłoszenie' %>
+</button>
+<div class="promotion-package-modal" id="<%= modalId %>" hidden>
+  <div class="promotion-package-panel" role="dialog" aria-modal="true" aria-labelledby="<%= modalId %>-title">
+    <button class="profile-modal-close" type="button" data-promotion-close aria-label="Zamknij">×</button>
+    <h2 id="<%= modalId %>-title"><%= activePromotion ? 'Przedłuż promowanie' : 'Promuj ogłoszenie' %></h2>
+    <% if (activePromotion) { %>
+      <p>Aktualnie promowane do: <strong><%= listing.promotion_expires_text %></strong>. Nowy pakiet zostanie doliczony do obecnej daty zakończenia.</p>
+    <% } else { %>
+      <p>Wybierz pakiet promowania. Ogłoszenie pojawi się wyżej w wynikach i w sekcjach promowanych.</p>
+    <% } %>
+    <form action="/ogloszenia/<%= listing.id %>/promocja" method="post">
+      <input type="hidden" name="returnTo" value="<%= returnTo || '/panel' %>">
+      <div class="promotion-card-grid compact">
+        <% promotionOptions.filter((option) => option.days > 0).forEach((option, index) => { %>
+          <label class="promotion-card">
+            <input type="radio" name="days" value="<%= option.days %>" <%= index === 0 ? 'checked' : '' %>>
+            <span><%= option.label %></span>
+            <strong><%= option.price %> Spotycoinów</strong>
+          </label>
+        <% }) %>
+      </div>
+      <button class="button" type="submit"><%= activePromotion ? 'Przedłuż promowanie' : 'Promuj ogłoszenie' %></button>
+    </form>
+  </div>
+</div>

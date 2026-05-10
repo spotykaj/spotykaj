@@ -1,0 +1,415 @@
+<%- include('../partials/header') %>
+
+<%
+  function parseProfileDetails(description) {
+    const details = {};
+    const bodyLines = [];
+    String(description || '').split('\n').forEach((line) => {
+      const trimmed = line.trim();
+      if (!trimmed) return;
+      const separator = trimmed.indexOf(':');
+      if (separator === -1) {
+        bodyLines.push(trimmed);
+        return;
+      }
+      const key = trimmed.slice(0, separator).trim().toLowerCase();
+      const value = trimmed.slice(separator + 1).trim();
+      if (!value) return;
+      details[key] = value;
+      if (key === 'opis') bodyLines.push(value);
+    });
+    details.body = bodyLines.length ? bodyLines.join('\n') : String(description || '').trim();
+    return details;
+  }
+
+  function valueFor(labels, fallback = '-') {
+    const keys = Array.isArray(labels) ? labels : [labels];
+    for (const label of keys) {
+      const direct = profileDetails[String(label).toLowerCase()];
+      if (direct) return direct;
+    }
+    return fallback;
+  }
+
+  function inferredGender() {
+    if (valueFor(['płeć', 'plec'], '') !== '') return valueFor(['płeć', 'plec']);
+    if (listing.category === 'Panowie') return 'Mężczyzna';
+    if (listing.category === 'Panie') return 'Kobieta';
+    if (listing.category === 'Pary') return 'Para';
+    if (listing.category === 'Trans') return 'Trans';
+    return '-';
+  }
+
+  const profileDetails = parseProfileDetails(listing.description);
+  const gallery = images.length ? images : [{ image_path: listing.cover || '/uploads/demo-market.svg' }];
+  const isVerified = Number(listing.owner_verified || 0) || ['tak', 'true', '1', 'zweryfikowane', 'zweryfikowana', 'zweryfikowany'].includes(valueFor(['weryfikacja', 'zweryfikowana', 'zweryfikowany'], '').toLowerCase());
+  const mainDetails = [
+    ['Wiek', valueFor('wiek')],
+    ['Płeć', inferredGender()],
+    ['Orientacja', valueFor('orientacja')],
+    ['Wzrost', valueFor('wzrost')],
+    ['Waga', valueFor('waga')],
+    ['Zodiak', valueFor('zodiak')],
+    ['Oczy', valueFor('oczy')],
+    ['Włosy', valueFor(['włosy', 'wlosy'])],
+    ['Biust', valueFor('biust')],
+    ['Rodzaj biustu', valueFor('rodzaj biustu')]
+  ];
+  const additionalInfo = [
+    ['Języki', valueFor(['języki', 'jezyki'])],
+    ['Narodowość', valueFor(['narodowość', 'narodowosc'])],
+    ['Etniczność', valueFor(['etniczność', 'etnicznosc'])],
+    ['Wyjazdy', valueFor('wyjazdy')]
+  ];
+  const locationInfo = [
+    ['Kraj', valueFor('kraj', 'Polska')],
+    ['Województwo', listing.region || '-'],
+    ['Miasto', listing.city || '-'],
+    ['Dzielnica', valueFor('dzielnica')]
+  ];
+  const extraPriceLabels = ['15 minut', '30 minut', '45 minut', '2 godziny', '3 godziny', '6 godzin', '12 godzin', '24 godziny', 'Noc', 'Weekend', 'Tydzień'];
+  const extraPrices = extraPriceLabels
+    .map((label) => [label, valueFor([label, `cena ${label}`], '')])
+    .filter((item) => item[1] && item[1] !== '-');
+  const preferences = valueFor(['preferencje', 'preferencja'], '')
+    .split(/[,;]+/)
+    .map((item) => item.trim())
+    .filter(Boolean);
+  const descriptionBody = profileDetails.body || 'Brak opisu.';
+  const phoneNumber = valueFor('telefon', '');
+  const preferredContact = valueFor('preferowany kontakt', '');
+  const whatsappNumber = phoneNumber.replace(/[^\d]/g, '');
+  const showWhatsapp = Boolean(whatsappNumber && preferredContact.toLowerCase().includes('whatsapp'));
+  const isOwner = user && Number(user.id) === Number(listing.user_id);
+  const publicAuthorName = listing.author_name || `Użytkownik ${listing.user_id}`;
+%>
+
+<section
+  class="profile-detail-page"
+  data-listing-detail
+  data-listing-id="<%= listing.id %>"
+  data-listing-title="<%= listing.title %>"
+  data-listing-owner="<%= publicAuthorName %>"
+  data-current-user="<%= user ? user.name : 'Gość' %>"
+  data-current-user-id="<%= user ? user.id : '' %>"
+  data-current-user-coins="<%= user ? Number(user.coins || 0) : 0 %>"
+>
+  <div class="profile-detail-shell">
+    <section class="profile-hero-card">
+      <div class="profile-detail-gallery">
+        <img class="profile-detail-main-image" src="<%= gallery[0].large_path || gallery[0].image_path %>" alt="<%= listing.title %>" loading="eager" decoding="async" data-gallery-main>
+        <div class="profile-detail-badges">
+          <% if (listing.is_promoted) { %><span class="status-chip promoted">Promowane</span><% } %>
+          <% if (isVerified) { %><span class="status-chip verified-text">Zweryfikowane</span><% } %>
+        </div>
+      </div>
+      <% if (gallery.length > 0) { %>
+        <div class="profile-detail-thumbs" aria-label="Galeria zdjęć">
+          <% gallery.slice(0, 5).forEach((image, index) => { %>
+            <button class="<%= index === 0 ? 'is-active' : '' %>" type="button" data-gallery-thumb="<%= image.large_path || image.image_path %>" aria-label="Pokaż zdjęcie <%= index + 1 %>">
+              <img src="<%= image.thumbnail_path || image.image_path %>" alt="<%= listing.title %>" loading="lazy" decoding="async">
+            </button>
+          <% }) %>
+        </div>
+      <% } %>
+    </section>
+
+    <aside class="profile-summary-card">
+      <div>
+        <h1><%= listing.title %></h1>
+        <p><%= listing.city %><%= listing.region ? ', ' + listing.region : '' %></p>
+      </div>
+      <div class="seller">
+        <span>Sprzedający</span>
+        <strong><%= publicAuthorName %></strong>
+      </div>
+      <strong class="profile-detail-price"><%= Number(listing.price).toLocaleString('pl-PL') %> zł / godz.</strong>
+      <div class="profile-detail-actions">
+        <% if (user) { %>
+          <form class="profile-favorite-form" action="/ogloszenia/<%= listing.id %>/ulubione" method="post">
+            <input type="hidden" name="returnTo" value="/ogloszenia/<%= listing.id %>">
+            <button class="button secondary-action favorite-detail-button <%= isFavorite ? 'is-favorite' : '' %>" type="submit"><%= isFavorite ? '♥ W ulubionych' : '♡ Dodaj do ulubionych' %></button>
+          </form>
+        <% } else { %>
+          <a class="button secondary-action favorite-detail-button" href="/logowanie">♡ Dodaj do ulubionych</a>
+        <% } %>
+        <button type="button" data-phone-reveal>Pokaż numer telefonu</button>
+        <% if (showWhatsapp) { %>
+          <a class="button whatsapp-action" href="https://wa.me/<%= whatsappNumber %>" target="_blank" rel="noopener">Wyślij wiadomość WhatsApp</a>
+        <% } %>
+        <button class="button secondary-action" type="button" data-message-open>Wyślij wiadomość (5 Spotycoinów)</button>
+        <% if (user && !isOwner) { %>
+          <button class="button secondary-action" type="button" data-tip-open>Daj napiwek</button>
+        <% } else if (!user) { %>
+          <a class="button secondary-action" href="/logowanie">Daj napiwek</a>
+        <% } %>
+        <% if (user && user.role === 'admin') { %>
+          <form action="/ogloszenia/<%= listing.id %>?_method=DELETE" method="post" onsubmit="return confirm('Czy na pewno chcesz usunąć ogłoszenie?');">
+            <button class="danger" type="submit">Usuń ogłoszenie</button>
+          </form>
+        <% } %>
+      </div>
+    </aside>
+
+    <section class="profile-detail-card full">
+      <h2>Szczegóły</h2>
+      <dl class="profile-detail-grid">
+        <% mainDetails.forEach(([label, value]) => { %>
+          <div><dt><%= label %></dt><dd><%= value %></dd></div>
+        <% }) %>
+      </dl>
+    </section>
+
+    <section class="profile-detail-card full">
+      <h2>Opis</h2>
+      <p class="profile-description-text"><%= descriptionBody %></p>
+    </section>
+
+    <section class="profile-detail-card">
+      <h2>Lokalizacja</h2>
+      <dl class="profile-detail-list">
+        <% locationInfo.forEach(([label, value]) => { %>
+          <div><dt><%= label %></dt><dd><%= value %></dd></div>
+        <% }) %>
+      </dl>
+    </section>
+
+    <section class="profile-detail-card">
+      <h2>Dodatkowe informacje</h2>
+      <dl class="profile-detail-list">
+        <% additionalInfo.forEach(([label, value]) => { %>
+          <div><dt><%= label %></dt><dd><%= value %></dd></div>
+        <% }) %>
+      </dl>
+    </section>
+
+    <section class="profile-detail-card full">
+      <h2>Cennik dodatkowy</h2>
+      <% if (extraPrices.length) { %>
+        <dl class="profile-price-grid">
+          <% extraPrices.forEach(([label, value]) => { %>
+            <div><dt><%= label %></dt><dd><%= value %> zł</dd></div>
+          <% }) %>
+        </dl>
+      <% } else { %>
+        <p class="profile-empty-text">Brak dodatkowego cennika.</p>
+      <% } %>
+    </section>
+
+    <section class="profile-detail-card full">
+      <h2>Preferencje</h2>
+      <% if (preferences.length) { %>
+        <div class="profile-preference-pills">
+          <% preferences.forEach((preference) => { %>
+            <span><%= preference %></span>
+          <% }) %>
+        </div>
+      <% } else { %>
+        <p class="profile-empty-text">Brak wybranych preferencji.</p>
+      <% } %>
+    </section>
+
+    <section class="profile-detail-card full">
+      <h2>Zgłoś ogłoszenie</h2>
+      <form class="report-form" action="/ogloszenia/<%= listing.id %>/zglos" method="post">
+        <label>Powód
+          <select name="reason" required>
+            <option value="Spam">Spam</option>
+            <option value="Fałszywe zdjęcia">Fałszywe zdjęcia</option>
+            <option value="Nieletni">Nieletni</option>
+            <option value="Scam">Scam</option>
+            <option value="Inne">Inne</option>
+          </select>
+        </label>
+        <label>Opis
+          <textarea name="note" rows="3" maxlength="500"></textarea>
+        </label>
+        <%- include('../partials/turnstile') %>
+        <button class="ghost" type="submit">Zgłoś ogłoszenie</button>
+      </form>
+    </section>
+
+    <% if (user && (user.role === 'moderator' || user.role === 'admin')) { %>
+      <section class="profile-detail-card full">
+        <h2>Moderacja zdjęć</h2>
+        <div class="media-moderation-grid">
+          <% images.forEach((image) => { %>
+            <div class="media-moderation-item">
+              <img src="<%= image.thumbnail_path || image.image_path %>" alt="Zdjęcie ogłoszenia" loading="lazy" decoding="async">
+              <% if (image.processing_warning) { %><p class="media-warning"><%= image.processing_warning %></p><% } %>
+              <a class="button small-button" href="<%= image.large_path || image.image_path %>" download>Pobierz zdjęcie</a>
+              <form action="/<%= user.role === 'admin' ? 'admin' : 'moderator' %>/media/<%= image.id %>/zastap" method="post" enctype="multipart/form-data">
+                <label>Wgraj poprawione zdjęcie
+                  <input type="file" name="image" accept=".jpg,.jpeg,.png,.webp,image/jpeg,image/png,image/webp" required>
+                </label>
+                <button class="ghost" type="submit">Wgraj poprawione zdjęcie</button>
+              </form>
+              <form action="/<%= user.role === 'admin' ? 'admin' : 'moderator' %>/media/<%= image.id %>/moderacja" method="post">
+                <label>Widoczność
+                  <select name="hidden">
+                    <option value="0" <%= Number(image.hidden || 0) ? '' : 'selected' %>>Widoczne</option>
+                    <option value="1" <%= Number(image.hidden || 0) ? 'selected' : '' %>>Ukryj</option>
+                  </select>
+                </label>
+                <label>Poziom NSFW
+                  <select name="nsfw_severity">
+                    <option value="standard" <%= image.nsfw_severity === 'standard' ? 'selected' : '' %>>Standard</option>
+                    <option value="sensitive" <%= image.nsfw_severity === 'sensitive' ? 'selected' : '' %>>Wrażliwe</option>
+                    <option value="illegal" <%= image.nsfw_severity === 'illegal' ? 'selected' : '' %>>Nielegalne / spam</option>
+                  </select>
+                </label>
+                <button class="ghost" type="submit">Zapisz</button>
+              </form>
+            </div>
+          <% }) %>
+        </div>
+      </section>
+    <% } %>
+  </div>
+</section>
+
+<% if (user && !isOwner) { %>
+  <div class="profile-message-modal" data-tip-modal hidden>
+    <form class="profile-message-panel tip-panel" action="/ogloszenia/<%= listing.id %>/napiwek" method="post" role="dialog" aria-modal="true" aria-labelledby="tip-modal-title">
+      <button class="profile-modal-close" type="button" data-tip-cancel aria-label="Zamknij">×</button>
+      <h2 id="tip-modal-title">Daj napiwek</h2>
+      <p class="message-cost">Twoje saldo: <%= Number(user.coins || 0).toLocaleString('pl-PL') %> Spotycoinów</p>
+      <div class="tip-presets" role="group" aria-label="Kwota napiwku">
+        <% [5, 10, 15, 25].forEach((amount, index) => { %>
+          <label>
+            <input type="radio" name="amount" value="<%= amount %>" <%= index === 0 ? 'checked' : '' %>>
+            <span><%= amount %> Spotycoinów</span>
+          </label>
+        <% }) %>
+      </div>
+      <label>Własna kwota
+        <input type="number" name="customAmount" min="1" step="1" inputmode="numeric" placeholder="Opcjonalnie">
+      </label>
+      <label>Krótka wiadomość
+        <textarea name="note" rows="3" maxlength="300" placeholder="Opcjonalnie"></textarea>
+      </label>
+      <button class="button" type="submit">Daj napiwek</button>
+    </form>
+  </div>
+<% } %>
+
+<div class="profile-message-modal" data-message-modal hidden>
+  <div class="profile-message-panel" role="dialog" aria-modal="true" aria-labelledby="message-modal-title">
+    <button class="profile-modal-close" type="button" data-message-cancel aria-label="Zamknij">×</button>
+    <h2 id="message-modal-title">Wyślij wiadomość</h2>
+    <label>Treść wiadomości
+      <textarea rows="5" data-message-text placeholder="Napisz wiadomość..."></textarea>
+    </label>
+    <p class="message-cost">Koszt wysłania wiadomości: 5 Spotycoinów</p>
+    <p class="message-status" data-message-status hidden></p>
+    <%- include('../partials/turnstile') %>
+    <div class="message-modal-actions">
+      <button type="button" data-message-send>Wyślij wiadomość</button>
+      <button class="ghost" type="button" data-message-cancel>Anuluj</button>
+    </div>
+  </div>
+</div>
+
+<script>
+  (() => {
+    const detail = document.querySelector('[data-listing-detail]');
+    if (!detail) return;
+
+    const mainImage = document.querySelector('[data-gallery-main]');
+    const thumbs = Array.from(document.querySelectorAll('[data-gallery-thumb]'));
+    thumbs.forEach((thumb) => {
+      thumb.addEventListener('click', () => {
+        if (mainImage) mainImage.src = thumb.dataset.galleryThumb;
+        thumbs.forEach((item) => item.classList.toggle('is-active', item === thumb));
+      });
+    });
+
+    const phoneButton = document.querySelector('[data-phone-reveal]');
+    phoneButton?.addEventListener('click', async () => {
+      try {
+        const response = await fetch(`/ogloszenia/${detail.dataset.listingId}/telefon`);
+        const payload = await response.json();
+        phoneButton.textContent = payload.phone || payload.message || 'Numer telefonu niedostępny';
+      } catch (error) {
+        phoneButton.textContent = 'Nie udało się pobrać numeru.';
+      }
+    });
+
+    const modal = document.querySelector('[data-message-modal]');
+    const tipModal = document.querySelector('[data-tip-modal]');
+    const openButton = document.querySelector('[data-message-open]');
+    const tipOpenButton = document.querySelector('[data-tip-open]');
+    const cancelButtons = Array.from(document.querySelectorAll('[data-message-cancel]'));
+    const tipCancelButtons = Array.from(document.querySelectorAll('[data-tip-cancel]'));
+    const sendButton = document.querySelector('[data-message-send]');
+    const messageText = document.querySelector('[data-message-text]');
+    const status = document.querySelector('[data-message-status]');
+
+    function setStatus(message, type) {
+      status.hidden = false;
+      status.textContent = message;
+      status.dataset.type = type;
+    }
+
+    function closeModal() {
+      modal.hidden = true;
+      status.hidden = true;
+    }
+
+    function closeTipModal() {
+      if (tipModal) tipModal.hidden = true;
+    }
+
+    openButton?.addEventListener('click', () => {
+      modal.hidden = false;
+      messageText.focus();
+      status.hidden = true;
+    });
+    tipOpenButton?.addEventListener('click', () => {
+      tipModal.hidden = false;
+      tipModal.querySelector('input[name="customAmount"]')?.focus();
+    });
+
+    cancelButtons.forEach((button) => button.addEventListener('click', closeModal));
+    tipCancelButtons.forEach((button) => button.addEventListener('click', closeTipModal));
+    modal?.addEventListener('click', (event) => {
+      if (event.target === modal) closeModal();
+    });
+    tipModal?.addEventListener('click', (event) => {
+      if (event.target === tipModal) closeTipModal();
+    });
+    document.addEventListener('keydown', (event) => {
+      if (event.key === 'Escape') {
+        if (modal && !modal.hidden) closeModal();
+        if (tipModal && !tipModal.hidden) closeTipModal();
+      }
+    });
+
+    sendButton?.addEventListener('click', async () => {
+      const text = messageText.value.trim();
+      if (!text) {
+        setStatus('Wpisz treść wiadomości.', 'error');
+        return;
+      }
+      try {
+        const turnstileToken = modal.querySelector('[name="cf-turnstile-response"]')?.value || '';
+        const response = await fetch(`/ogloszenia/${detail.dataset.listingId}/wiadomosc`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ message: text, 'cf-turnstile-response': turnstileToken })
+        });
+        const payload = await response.json();
+        if (!response.ok || !payload.ok) {
+          setStatus(payload.message || 'Nie udało się wysłać wiadomości.', 'error');
+          return;
+        }
+        messageText.value = '';
+        setStatus(payload.message || 'Wiadomość została wysłana. Pobrano 5 Spotycoinów.', 'success');
+      } catch (error) {
+        setStatus('Nie udało się wysłać wiadomości. Spróbuj ponownie.', 'error');
+      }
+    });
+  })();
+</script>
+
+<%- include('../partials/footer') %>

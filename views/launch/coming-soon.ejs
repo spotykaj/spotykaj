@@ -1,0 +1,85 @@
+<!doctype html>
+<html lang="pl">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title><%= title %> | Spotykaj</title>
+  <meta name="description" content="<%= metaDescription %>">
+  <link rel="canonical" href="<%= canonicalUrl %>">
+  <link rel="stylesheet" href="/css/styles.css?v=2026051001">
+</head>
+<body class="launch-page">
+  <main class="launch-shell">
+    <section class="launch-card" aria-labelledby="launch-title">
+      <img class="launch-logo" src="/uploads/spotykaj-logo.png" alt="Spotykaj">
+      <p class="launch-eyebrow">Spotykaj</p>
+      <h1 id="launch-title">Strona jest w budowie</h1>
+      <p class="launch-copy">Jeśli chcesz być na bieżąco, wpisz swój e-mail poniżej. Powiadomimy Cię, gdy wystartujemy.</p>
+
+      <% if (flash) { %>
+        <div class="launch-message <%= flash.type %>"><%= flash.message %></div>
+      <% } %>
+
+      <form class="launch-form" action="/powiadom-mnie" method="post">
+        <label class="sr-only" for="launch-email">Adres e-mail</label>
+        <input id="launch-email" type="email" name="email" placeholder="Twój adres e-mail" autocomplete="email" required>
+        <button type="submit">Powiadom mnie</button>
+      </form>
+    </section>
+  </main>
+
+  <footer class="launch-footer">
+    <a href="/regulamin">Regulamin</a>
+    <a href="/polityka-prywatnosci">Polityka prywatności</a>
+    <a href="/zasady-zdjec">Zasady zdjęć</a>
+  </footer>
+  <%- include('../partials/antiTraffickingBar') %>
+
+  <div class="age-gate" data-age-gate hidden>
+    <div class="age-gate-panel" role="dialog" aria-modal="true" aria-labelledby="age-gate-title">
+      <p class="eyebrow">18+</p>
+      <h2 id="age-gate-title">Serwis tylko dla osób pełnoletnich</h2>
+      <p>Spotykaj.com zawiera treści przeznaczone wyłącznie dla osób, które ukończyły 18 lat. Potwierdź, że jesteś osobą pełnoletnią.</p>
+      <div class="age-gate-actions">
+        <button class="button" type="button" data-age-confirm>Mam 18+ lat - wchodzę</button>
+        <button class="ghost" type="button" data-age-decline>Nie mam 18 lat - opuść stronę</button>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    (() => {
+      const gate = document.querySelector('[data-age-gate]');
+      if (!gate) return;
+      const key = 'spotykaj_age_verified';
+      const maxAge = 30 * 24 * 60 * 60 * 1000;
+
+      function isVerified() {
+        try {
+          const stored = JSON.parse(localStorage.getItem(key) || 'null');
+          return stored && stored.value === true && Date.now() - Number(stored.timestamp || 0) < maxAge;
+        } catch (error) {
+          return document.cookie.includes(`${key}=true`);
+        }
+      }
+
+      if (!isVerified()) {
+        gate.hidden = false;
+        document.body.classList.add('age-gate-open');
+      }
+
+      gate.querySelector('[data-age-confirm]')?.addEventListener('click', () => {
+        const expires = new Date(Date.now() + maxAge).toUTCString();
+        localStorage.setItem(key, JSON.stringify({ value: true, timestamp: Date.now() }));
+        document.cookie = `${key}=true; expires=${expires}; path=/; SameSite=Lax`;
+        gate.hidden = true;
+        document.body.classList.remove('age-gate-open');
+      });
+
+      gate.querySelector('[data-age-decline]')?.addEventListener('click', () => {
+        window.location.href = 'https://www.google.com';
+      });
+    })();
+  </script>
+</body>
+</html>

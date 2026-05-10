@@ -1,0 +1,68 @@
+<%- include('../partials/header') %>
+<%
+  const accountTypeLabels = {
+    prywatne: 'Konto prywatne',
+    agencja: 'Agencja',
+    salon_masazu: 'Salon masażu'
+  };
+%>
+<section class="user-dashboard-shell">
+  <%- include('../partials/userPanelSidebar', { activePanel }) %>
+
+  <div class="user-dashboard-content">
+    <header class="dashboard-welcome-card">
+      <div>
+        <p class="eyebrow">Ustawienia konta</p>
+        <h1>Mój profil</h1>
+        <p>Dane imienia i nazwiska są widoczne tylko dla Ciebie oraz administracji.</p>
+      </div>
+      <a class="ghost button-like" href="/panel">Wróć do panelu</a>
+    </header>
+
+    <form class="dashboard-panel-card profile-settings-form" action="/panel/profile" method="post">
+      <div class="dashboard-card-head">
+        <div>
+          <p class="eyebrow">Profil</p>
+          <h2>Dane konta</h2>
+        </div>
+      </div>
+      <div class="profile-form-grid">
+        <label>Nazwa użytkownika
+          <input type="text" name="username" value="<%= profile.username || '' %>" required minlength="3" maxlength="30" pattern="[A-Za-z0-9_-]+" autocomplete="username">
+          <span class="helper-text">Widoczna przy Twoich ogłoszeniach.</span>
+        </label>
+        <label>E-mail
+          <input type="email" name="email" value="<%= profile.email || '' %>" required maxlength="180">
+        </label>
+        <label>Imię i nazwisko
+          <input type="text" name="full_name" value="<%= profile.name || '' %>" required maxlength="180" autocomplete="name">
+          <span class="helper-text">Widoczne tylko dla Ciebie i administracji.</span>
+        </label>
+        <label>Rodzaj konta
+          <select name="account_type" required>
+            <% Object.entries(accountTypeLabels).forEach(([value, label]) => { %>
+              <option value="<%= value %>" <%= profile.account_type === value ? 'selected' : '' %>><%= label %></option>
+            <% }) %>
+          </select>
+        </label>
+      </div>
+
+      <div class="profile-password-section">
+        <div>
+          <p class="eyebrow">Bezpieczeństwo</p>
+          <h3>Zmiana hasła</h3>
+        </div>
+        <div class="profile-form-grid">
+          <label>Nowe hasło
+          <input type="password" name="password" minlength="8" autocomplete="new-password" placeholder="Zostaw puste, jeśli bez zmian">
+          </label>
+          <label>Powtórz nowe hasło
+            <input type="password" name="password_confirmation" minlength="8" autocomplete="new-password">
+          </label>
+        </div>
+      </div>
+      <button class="button" type="submit">Zapisz zmiany</button>
+    </form>
+  </div>
+</section>
+<%- include('../partials/footer') %>

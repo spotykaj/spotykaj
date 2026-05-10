@@ -1,0 +1,172 @@
+<%- include('../partials/header') %>
+<section class="section compact coin-shop-page" data-coin-shop>
+  <div class="section-head">
+    <div>
+      <p class="eyebrow">Spotycoin</p>
+      <h1>Kup Spotycoiny</h1>
+      <p class="muted">Aby doładować Spotycoiny, kup Crypto Code, wymień go na Litecoin (LTC) i wyślij środki na nasz adres portfela. Po weryfikacji administrator doda Spotycoiny do Twojego konta.</p>
+    </div>
+    <div class="coin-balance">
+      <span>Twoje saldo</span>
+      <strong><%= Number(user.coins || 0).toLocaleString('pl-PL') %></strong>
+    </div>
+  </div>
+
+  <div class="coin-package-grid">
+    <% packages.forEach((pack) => { %>
+      <%
+        const priceEur = Number(pack.priceEur);
+        const amount = Number(pack.amount);
+        const voucherLinks = {
+          25: 'https://perfectvoucher.net/product/43621-crypto-voucher-25-eur-gift-card',
+          50: 'https://perfectvoucher.net/product/43622-crypto-voucher-50-eur-gift-card',
+          100: 'https://perfectvoucher.net/product/43623-crypto-voucher-100-eur-gift-card',
+          150: 'https://perfectvoucher.net/product/43624-crypto-voucher-150-eur-gift-card',
+          300: 'https://www.g2a.com/pl/crypto-voucher-300-eur-key-global-i10000337580089',
+          700: 'https://www.g2a.com/pl/crypto-voucher-700-eur-key-global-i10000337580318'
+        };
+        const voucherUrl = voucherLinks[priceEur] || 'https://perfectvoucher.net';
+      %>
+      <article class="coin-package-card" tabindex="0" data-package-card data-amount="<%= Number.isFinite(amount) ? amount : '' %>">
+        <span>Crypto Code</span>
+        <p><%= Number.isFinite(priceEur) ? priceEur.toLocaleString('pl-PL') : '-' %> EUR</p>
+        <h2><%= Number.isFinite(amount) ? amount.toLocaleString('pl-PL') : '0' %> Spotycoinów</h2>
+        <a class="button voucher-button" href="<%= voucherUrl %>" target="_blank" rel="noopener" data-voucher-link>Kup voucher</a>
+      </article>
+    <% }) %>
+  </div>
+
+  <section class="dashboard-block coin-steps">
+    <h2>Instrukcja realizacji Crypto Code</h2>
+    <div class="coin-step-grid">
+      <div class="coin-step"><span>1</span><p>Kup Crypto Code na PerfectVoucher.</p><a class="button small-button" href="https://perfectvoucher.net" target="_blank" rel="noopener">Kup Crypto Code</a></div>
+      <div class="coin-step"><span>2</span><p>Wejdź na stronę realizacji vouchera.</p><a class="button small-button" href="https://cryptovoucher.io/redeem-now" target="_blank" rel="noopener">Przejdź do CryptoVoucher</a></div>
+      <div class="coin-step"><span>3</span><p>Podaj numer vouchera oraz swój e-mail.</p></div>
+      <div class="coin-step"><span>4</span><p>Otrzymasz na maila kod weryfikacyjny — wpisz go, aby przejść dalej.</p></div>
+      <div class="coin-step"><span>5</span><p>Podaj swoje dane adresowe.</p></div>
+      <div class="coin-step"><span>6</span><p>Na ostatniej stronie wybierz kryptowalutę: Litecoin (LTC).</p></div>
+      <div class="coin-step"><span>7</span><p>Wklej nasz adres portfela LTC: <code>PLACEHOLDER_LTC_WALLET_ADDRESS</code>.</p></div>
+      <div class="coin-step"><span>8</span><p>Po wysłaniu środków wróć na Spotykaj i wyślij zgłoszenie do weryfikacji.</p></div>
+    </div>
+  </section>
+
+  <section class="dashboard-block wallet-block">
+    <h2>Adres portfela Litecoin (LTC)</h2>
+    <div class="wallet-copy-row">
+      <code data-ltc-wallet>LTC_WALLET_ADDRESS_DO_UZUPEŁNIENIA</code>
+      <button class="ghost" type="button" data-copy-wallet>Kopiuj adres</button>
+    </div>
+  </section>
+
+  <section class="dashboard-block verification-block">
+    <h2>Zgłoszenie do weryfikacji</h2>
+    <form class="form-card coin-verification-form" data-purchase-form>
+      <label>Wybrany pakiet
+        <select name="amount" data-package-select-field required>
+          <option value="">Wybierz pakiet</option>
+          <% packages.forEach((pack) => { %>
+            <option value="<%= pack.amount %>"><%= Number(pack.priceEur).toLocaleString('pl-PL') %> EUR · <%= Number(pack.amount).toLocaleString('pl-PL') %> Spotycoinów</option>
+          <% }) %>
+        </select>
+      </label>
+      <label>Kod / numer vouchera
+        <input type="text" name="code" required autocomplete="off">
+      </label>
+      <label>E-mail użyty przy realizacji vouchera
+        <input type="email" name="voucherEmail" autocomplete="email">
+      </label>
+      <label>ID transakcji / TXID Litecoin
+        <input type="text" name="ltcTxid" autocomplete="off">
+      </label>
+      <label>Uwagi dla administratora
+        <textarea name="userNote" rows="4"></textarea>
+      </label>
+      <%- include('../partials/turnstile') %>
+      <p class="message-status" data-purchase-status hidden></p>
+      <button type="submit">Wyślij do weryfikacji</button>
+    </form>
+  </section>
+</section>
+
+<script>
+  (() => {
+    const form = document.querySelector('[data-purchase-form]');
+    const packageField = document.querySelector('[data-package-select-field]');
+    const status = document.querySelector('[data-purchase-status]');
+    const wallet = document.querySelector('[data-ltc-wallet]');
+    const cards = Array.from(document.querySelectorAll('[data-package-card]'));
+
+    function setStatus(message, type) {
+      status.hidden = false;
+      status.textContent = message;
+      status.dataset.type = type;
+    }
+
+    function selectPackage(amount, scrollToForm = true) {
+      packageField.value = amount;
+      cards.forEach((card) => card.classList.toggle('is-selected', card.dataset.amount === amount));
+      if (scrollToForm) {
+        form.scrollIntoView({ behavior: 'smooth', block: 'start' });
+      }
+    }
+
+    cards.forEach((card) => {
+      card.addEventListener('click', () => selectPackage(card.dataset.amount));
+      card.addEventListener('keydown', (event) => {
+        if (event.key === 'Enter' || event.key === ' ') {
+          event.preventDefault();
+          selectPackage(card.dataset.amount);
+        }
+      });
+    });
+
+    document.querySelectorAll('[data-voucher-link]').forEach((link) => {
+      link.addEventListener('click', (event) => event.stopPropagation());
+    });
+
+    packageField.addEventListener('change', () => {
+      selectPackage(packageField.value, false);
+    });
+
+    document.querySelector('[data-copy-wallet]')?.addEventListener('click', async () => {
+      const text = wallet.textContent.trim();
+      try {
+        await navigator.clipboard.writeText(text);
+        setStatus('Adres portfela został skopiowany.', 'success');
+      } catch (error) {
+        setStatus('Skopiuj adres ręcznie z pola portfela.', 'error');
+      }
+    });
+
+    form.addEventListener('submit', async (event) => {
+      event.preventDefault();
+      const data = Object.fromEntries(new FormData(form).entries());
+      if (!data.amount) {
+        setStatus('Wybierz pakiet Spotycoin.', 'error');
+        return;
+      }
+      if (!String(data.code || '').trim()) {
+        setStatus('Wpisz kod lub numer vouchera.', 'error');
+        return;
+      }
+      if (!String(data.voucherEmail || '').trim() && !String(data.ltcTxid || '').trim()) {
+        setStatus('Podaj e-mail użyty przy realizacji vouchera albo TXID Litecoin.', 'error');
+        return;
+      }
+      const response = await fetch('/kup-spotycoiny/aktywuj', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(data)
+      });
+      const payload = await response.json();
+      if (!response.ok || !payload.ok) {
+        setStatus(payload.message || 'Nie udało się wysłać zgłoszenia.', 'error');
+        return;
+      }
+      form.reset();
+      selectPackage('', false);
+      setStatus(payload.message, 'success');
+    });
+  })();
+</script>
+<%- include('../partials/footer') %>

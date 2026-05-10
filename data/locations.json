@@ -1,0 +1,32 @@
+{
+  "regions": [
+    {
+      "name": "Dolnośląskie",
+      "cities": [
+        {
+          "name": "Wrocław",
+          "districts": [
+            { "name": "Stare Miasto", "streets": ["Rynek", "Kazimierza Wielkiego", "Świdnicka"] },
+            { "name": "Krzyki", "streets": ["Powstańców Śląskich", "Borowska", "Zwycięska"] }
+          ],
+          "streets": ["Legnicka", "Grabiszyńska"]
+        }
+      ]
+    },
+    { "name": "Kujawsko-pomorskie", "cities": [{ "name": "Bydgoszcz", "districts": [{ "name": "Śródmieście", "streets": ["Gdańska", "Dworcowa"] }], "streets": ["Jagiellońska"] }] },
+    { "name": "Lubelskie", "cities": [{ "name": "Lublin", "districts": [{ "name": "Śródmieście", "streets": ["Krakowskie Przedmieście", "Narutowicza"] }], "streets": ["Zana"] }] },
+    { "name": "Lubuskie", "cities": [{ "name": "Zielona Góra", "districts": [{ "name": "Centrum", "streets": ["Bohaterów Westerplatte", "Kupiecka"] }], "streets": ["Wrocławska"] }] },
+    { "name": "Łódzkie", "cities": [{ "name": "Łódź", "districts": [{ "name": "Śródmieście", "streets": ["Piotrkowska", "Tuwima"] }, { "name": "Bałuty", "streets": ["Zgierska", "Łagiewnicka"] }], "streets": ["Narutowicza"] }] },
+    { "name": "Małopolskie", "cities": [{ "name": "Kraków", "districts": [{ "name": "Stare Miasto", "streets": ["Floriańska", "Grodzka"] }, { "name": "Kazimierz", "streets": ["Szeroka", "Miodowa"] }], "streets": ["Karmelicka"] }] },
+    { "name": "Mazowieckie", "cities": [{ "name": "Warszawa", "districts": [{ "name": "Śródmieście", "streets": ["Marszałkowska", "Nowy Świat", "Aleje Jerozolimskie"] }, { "name": "Mokotów", "streets": ["Puławska", "Wołoska", "Rakowiecka"] }, { "name": "Wola", "streets": ["Prosta", "Towarowa", "Żelazna"] }], "streets": ["Jana Pawła II"] }] },
+    { "name": "Opolskie", "cities": [{ "name": "Opole", "districts": [{ "name": "Centrum", "streets": ["Krakowska", "Ozimska"] }], "streets": ["Niemodlińska"] }] },
+    { "name": "Podkarpackie", "cities": [{ "name": "Rzeszów", "districts": [{ "name": "Śródmieście", "streets": ["3 Maja", "Kościuszki"] }], "streets": ["Piłsudskiego"] }] },
+    { "name": "Podlaskie", "cities": [{ "name": "Białystok", "districts": [{ "name": "Centrum", "streets": ["Lipowa", "Sienkiewicza"] }], "streets": ["Mickiewicza"] }] },
+    { "name": "Pomorskie", "cities": [{ "name": "Gdańsk", "districts": [{ "name": "Śródmieście", "streets": ["Długa", "Ogarna"] }, { "name": "Wrzeszcz", "streets": ["Grunwaldzka", "Wajdeloty"] }], "streets": ["Kartuska"] }] },
+    { "name": "Śląskie", "cities": [{ "name": "Katowice", "districts": [{ "name": "Śródmieście", "streets": ["Mariacka", "3 Maja"] }], "streets": ["Chorzowska"] }] },
+    { "name": "Świętokrzyskie", "cities": [{ "name": "Kielce", "districts": [{ "name": "Centrum", "streets": ["Sienkiewicza", "Duża"] }], "streets": ["Warszawska"] }] },
+    { "name": "Warmińsko-mazurskie", "cities": [{ "name": "Olsztyn", "districts": [{ "name": "Śródmieście", "streets": ["Dąbrowszczaków", "11 Listopada"] }], "streets": ["Piłsudskiego"] }] },
+    { "name": "Wielkopolskie", "cities": [{ "name": "Poznań", "districts": [{ "name": "Stare Miasto", "streets": ["Półwiejska", "Garbary"] }, { "name": "Jeżyce", "streets": ["Dąbrowskiego", "Roosevelta"] }], "streets": ["Głogowska"] }] },
+    { "name": "Zachodniopomorskie", "cities": [{ "name": "Szczecin", "districts": [{ "name": "Centrum", "streets": ["Aleja Wojska Polskiego", "Jagiellońska"] }], "streets": ["Krzywoustego"] }, { "name": "Gryfice", "districts": [{ "name": "Centrum", "streets": ["Niepodległości", "Wojska Polskiego"] }], "streets": ["Kamieńska"] }] }
+  ]
+}

@@ -1,0 +1,67 @@
+<%- include('../partials/header') %>
+<%
+  const inbox = inboxMessages || [];
+  const outbox = outboxMessages || [];
+  const allMessages = [...inbox, ...outbox]
+    .sort((a, b) => new Date(b.created_at) - new Date(a.created_at));
+%>
+<section class="user-dashboard-shell">
+  <%- include('../partials/userPanelSidebar', { activePanel }) %>
+
+  <div class="user-dashboard-content">
+    <header class="dashboard-welcome-card">
+      <div>
+        <p class="eyebrow">Kontakt</p>
+        <h1>Wiadomości</h1>
+        <p>Skrzynka odbiorcza, wysłane wiadomości i rozmowy przy ogłoszeniach.</p>
+      </div>
+    </header>
+
+    <section class="dashboard-panel-card messages-panel">
+      <div class="conversation-layout">
+        <aside class="conversation-list" aria-label="Lista wiadomości">
+          <h2>Rozmowy</h2>
+          <% allMessages.forEach((item) => { %>
+            <a class="conversation-list-item <%= selectedMessage && selectedMessage.id === item.id ? 'is-active' : '' %> <%= Number(item.is_read) ? '' : 'is-unread' %>" href="/panel/messages/<%= item.id %>">
+              <strong><%= item.sender_id === user.id ? item.receiver_name : item.sender_name %></strong>
+              <span><%= item.listing_title || 'Ogłoszenie' %></span>
+              <small><%= new Date(item.created_at).toLocaleString('pl-PL') %></small>
+            </a>
+          <% }) %>
+          <% if (!allMessages.length) { %><div class="empty">Brak wiadomości.</div><% } %>
+        </aside>
+
+        <div class="conversation-detail">
+          <% if (selectedMessage) { %>
+            <div class="conversation-heading">
+              <div>
+                <p class="eyebrow">Ogłoszenie</p>
+                <h2><a href="/ogloszenia/<%= selectedMessage.listing_id %>"><%= selectedMessage.listing_title %></a></h2>
+              </div>
+              <span class="pill"><%= Number(selectedMessage.is_read) ? 'Przeczytana' : 'Nieprzeczytana' %></span>
+            </div>
+            <div class="chat-thread">
+              <% conversation.forEach((message) => { %>
+                <article class="chat-bubble <%= message.sender_id === user.id ? 'is-own' : '' %>">
+                  <strong><%= message.sender_id === user.id ? 'Ty' : message.sender_name %></strong>
+                  <p><%= message.body %></p>
+                  <small><%= new Date(message.created_at).toLocaleString('pl-PL') %></small>
+                </article>
+              <% }) %>
+            </div>
+            <form class="reply-form" action="/panel/messages/<%= selectedMessage.id %>/reply" method="post">
+              <label>Odpowiedź
+                <textarea name="body" rows="4" required maxlength="2000"></textarea>
+              </label>
+              <p class="message-cost">Koszt wysłania wiadomości: 5 Spotycoinów</p>
+              <button class="button" type="submit">Wyślij odpowiedź</button>
+            </form>
+          <% } else { %>
+            <div class="empty">Wybierz rozmowę z listy.</div>
+          <% } %>
+        </div>
+      </div>
+    </section>
+  </div>
+</section>
+<%- include('../partials/footer') %>
