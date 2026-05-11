@@ -8,13 +8,15 @@
     "dev": "nodemon src/app.js",
     "seed": "node scripts/seed.js",
     "test": "node --test",
-    "ledger:verify": "node scripts/ledger-verify.js"
+    "ledger:verify": "node scripts/ledger-verify.js",
+    "backup:db": "node scripts/backup-db.js"
   },
   "dependencies": {
     "bcryptjs": "^2.4.3",
     "ejs": "^3.1.10",
     "express": "^4.19.2",
     "express-session": "^1.18.0",
+    "helmet": "^8.1.0",
     "method-override": "^3.0.0",
     "multer": "^2.0.2",
     "sql.js": "^1.12.0"

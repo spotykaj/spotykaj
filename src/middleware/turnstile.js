@@ -1,4 +1,5 @@
 const { getTurnstileConfig } = require('../config/securityStatus');
+const fs = require('fs');
 
 const TURNSTILE_ERROR = 'Nie udało się potwierdzić zabezpieczenia. Spróbuj ponownie.';
 
@@ -7,6 +8,11 @@ function getToken(req) {
 }
 
 function reject(req, res) {
+  [req.file, ...Object.values(req.files || {}).flat()].filter(Boolean).forEach((file) => {
+    if (file.path) {
+      try { fs.unlinkSync(file.path); } catch (error) {}
+    }
+  });
   const contentType = req.get?.('content-type') || '';
   const wantsJson = req.is?.('application/json') || contentType.includes('application/json') || req.xhr || (req.accepts?.('json') && !req.accepts?.('html'));
   if (wantsJson) {

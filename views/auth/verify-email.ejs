@@ -1,0 +1,18 @@
+<%- include('../partials/header') %>
+<section class="auth-shell">
+  <div class="form-card">
+    <p class="eyebrow">Bezpieczeństwo konta</p>
+    <h1>Potwierdź adres e-mail</h1>
+    <% if (user && user.email_verified_at) { %>
+      <p>Twój adres e-mail jest już potwierdzony.</p>
+      <a class="button" href="/panel">Przejdź do panelu</a>
+    <% } else { %>
+      <p>Wysłaliśmy link weryfikacyjny na adres przypisany do konta. Potwierdzenie adresu jest wymagane przed dodawaniem ogłoszeń, wysyłaniem wiadomości oraz zakupem promocji.</p>
+      <form action="/weryfikacja-email/wyslij" method="post">
+        <button class="button" type="submit">Wyślij link ponownie</button>
+      </form>
+      <p class="helper-text">Jeżeli wiadomość nie dotarła, sprawdź folder spam albo wyślij nowy link.</p>
+    <% } %>
+  </div>
+</section>
+<%- include('../partials/footer') %>

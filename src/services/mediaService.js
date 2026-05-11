@@ -17,9 +17,6 @@ const LIMITS = {
   maxUserStorageBytes: 500 * 1024 * 1024,
   maxDailyUploads: 100
 };
-const FACE_BLUR_WARNING = 'Nie wykryto twarzy do rozmycia.';
-const FACE_BLUR_FALLBACK_WARNING = 'Automatyczne wykrycie twarzy nie powiodło się, użyto rozmycia awaryjnego.';
-
 function validationError(message) {
   const error = new Error(message);
   error.code = 'VALIDATION_ERROR';
@@ -50,8 +47,7 @@ function signature(filePath) {
     jpeg: buffer.length > 3 && buffer[0] === 0xff && buffer[1] === 0xd8 && buffer[2] === 0xff,
     png: buffer.length > 8 && buffer.slice(0, 8).equals(Buffer.from([0x89, 0x50, 0x4e, 0x47, 0x0d, 0x0a, 0x1a, 0x0a])),
     webp: buffer.length > 12 && buffer.slice(0, 4).toString('ascii') === 'RIFF' && buffer.slice(8, 12).toString('ascii') === 'WEBP',
-    mp4: buffer.length > 12 && buffer.slice(4, 8).toString('ascii') === 'ftyp',
-    webm: buffer.length > 4 && buffer[0] === 0x1a && buffer[1] === 0x45 && buffer[2] === 0xdf && buffer[3] === 0xa3
+    mp4: buffer.length > 12 && buffer.slice(4, 8).toString('ascii') === 'ftyp'
   };
 }
 
@@ -67,8 +63,8 @@ function validateVideo(file) {
     throw validationError('Plik wideo może mieć maksymalnie 60 MB.');
   }
   const sig = signature(file.path);
-  if (sig.mp4 || sig.webm) return;
-  throw validationError('Dodaj prawidłowy plik wideo MP4 albo WEBM.');
+  if (sig.mp4) return;
+  throw validationError('Dodaj prawidłowy plik wideo MP4.');
 }
 
 async function assertQuota(userId, files) {
@@ -128,103 +124,18 @@ async function applyWatermark(imagePath) {
   fs.renameSync(tempPath, imagePath);
 }
 
-function parseConnectedComponents(output, width, height) {
-  return String(output || '')
-    .split('\n')
-    .map((line) => {
-      const match = line.match(/\s(\d+)x(\d+)\+(\d+)\+(\d+)\s+[\d.]+,[\d.]+\s+\d+\s+srgb\(255,255,255\)/);
-      if (!match) return null;
-      const [, w, h, x, y] = match.map(Number);
-      const area = w * h;
-      const ratio = w / Math.max(h, 1);
-      const centerY = y + h / 2;
-      if (area < width * height * 0.01 || area > width * height * 0.45) return null;
-      if (ratio < 0.45 || ratio > 1.45) return null;
-      if (centerY > height * 0.78) return null;
-      return { x, y, width: w, height: h, area };
-    })
-    .filter(Boolean)
-    .sort((a, b) => b.area - a.area);
-}
-
-async function detectFaceRectangle(imagePath) {
-  const { width, height } = await imageDimensions(imagePath);
-  const sampleSize = 640;
-  const scale = Math.min(1, sampleSize / Math.max(width, height));
-  const sampleWidth = Math.max(1, Math.round(width * scale));
-  const sampleHeight = Math.max(1, Math.round(height * scale));
-  const fx = '(r>0.34&&g>0.18&&b>0.10&&r>g&&g>b&&(r-b)>0.08&&abs(r-g)>0.025)?1:0';
-  const { stdout, stderr } = await execFileAsync('convert', [
-    imagePath,
-    '-resize',
-    `${sampleWidth}x${sampleHeight}!`,
-    '-alpha',
-    'off',
-    '-colorspace',
-    'sRGB',
-    '-fx',
-    fx,
-    '-morphology',
-    'Close',
-    'Disk:5',
-    '-morphology',
-    'Open',
-    'Disk:3',
-    '-define',
-    'connected-components:verbose=true',
-    '-connected-components',
-    '8',
-    'null:'
-  ], { timeout: 30000, maxBuffer: 1024 * 1024 });
-
-  const face = parseConnectedComponents(`${stdout}\n${stderr}`, sampleWidth, sampleHeight)[0];
-  if (!face) return null;
-  const padding = 0.18;
-  const x = Math.max(0, Math.round((face.x - face.width * padding) / scale));
-  const y = Math.max(0, Math.round((face.y - face.height * padding) / scale));
-  const rectWidth = Math.min(width - x, Math.round(face.width * (1 + padding * 2) / scale));
-  const rectHeight = Math.min(height - y, Math.round(face.height * (1 + padding * 2) / scale));
-  return { x, y, width: rectWidth, height: rectHeight };
-}
-
-async function blurRectangle(imagePath, rect) {
-  const tempPath = `${imagePath}.blur-${crypto.randomBytes(4).toString('hex')}.jpg`;
-  await execFileAsync('convert', [
-    imagePath,
-    '(',
-    imagePath,
-    '-crop',
-    `${rect.width}x${rect.height}+${rect.x}+${rect.y}`,
-    '-blur',
-    '0x16',
-    ')',
-    '-geometry',
-    `+${rect.x}+${rect.y}`,
-    '-composite',
-    tempPath
-  ], { timeout: 30000 });
-  fs.renameSync(tempPath, imagePath);
-}
-
-async function applyFaceBlur(imagePath) {
-  let rect = await detectFaceRectangle(imagePath);
-  let fallback = false;
-  if (!rect) {
-    const { width, height } = await imageDimensions(imagePath);
-    rect = {
-      x: Math.round(width * 0.35),
-      y: Math.round(height * 0.08),
-      width: Math.round(width * 0.30),
-      height: Math.round(height * 0.24)
-    };
-    fallback = true;
-  }
-  await blurRectangle(imagePath, rect);
-  return { ...rect, fallback };
-}
-
 async function processImage(userId, file, options = {}) {
-  validateImage(file);
+  try {
+    validateImage(file);
+  } catch (error) {
+    await fraudService.flagSuspicious({
+      userId,
+      eventType: 'blocked_upload',
+      score: 3,
+      metadata: { filename: file.originalname, mimetype: file.mimetype, reason: 'image_signature' }
+    }).catch(() => {});
+    throw error;
+  }
   const hash = hashFile(file.path);
   const duplicate = await get('SELECT id FROM media_assets WHERE file_hash = ? ORDER BY id ASC LIMIT 1', [hash]);
   const [year, month] = nowPath();
@@ -242,13 +153,6 @@ async function processImage(userId, file, options = {}) {
   await convertImage(file.path, largePath, '1400x1400', 84);
   await convertImage(file.path, mediumPath, '760x760', 80);
   await convertImage(file.path, path.join(publicDir, paths.thumbnail), '320x320', 72);
-  let faceRect = null;
-  let warning = null;
-  if (options.faceBlur) {
-    faceRect = await applyFaceBlur(largePath);
-    await applyFaceBlur(mediumPath);
-    if (faceRect?.fallback) warning = FACE_BLUR_FALLBACK_WARNING;
-  }
   await applyWatermark(largePath);
   await applyWatermark(mediumPath);
   const storedSize = ['large', 'medium', 'thumbnail']
@@ -273,22 +177,29 @@ async function processImage(userId, file, options = {}) {
     hash,
     size: storedSize,
     mimeType: 'image/jpeg',
-    duplicateOf: duplicate?.id || null
-    ,
-    faceRect,
-    warning
+    duplicateOf: duplicate?.id || null,
+    warning: null
   };
 }
 
 async function processVideo(userId, file) {
   if (!file) return null;
-  validateVideo(file);
+  try {
+    validateVideo(file);
+  } catch (error) {
+    await fraudService.flagSuspicious({
+      userId,
+      eventType: 'blocked_upload',
+      score: 3,
+      metadata: { filename: file.originalname, mimetype: file.mimetype, reason: 'video_signature' }
+    }).catch(() => {});
+    throw error;
+  }
   const hash = hashFile(file.path);
   const [year, month] = nowPath();
   const dir = path.join(mediaRoot, year, month);
   ensureDir(dir);
-  const ext = path.extname(file.originalname).toLowerCase() === '.webm' ? '.webm' : '.mp4';
-  const relative = `/media/listings/${year}/${month}/${Date.now()}-${crypto.randomBytes(6).toString('hex')}${ext}`;
+  const relative = `/media/listings/${year}/${month}/${Date.now()}-${crypto.randomBytes(6).toString('hex')}.mp4`;
   fs.renameSync(file.path, path.join(publicDir, relative));
   return {
     kind: 'video',
@@ -354,6 +265,20 @@ async function replaceListingImage({ imageId, userId, file }) {
   return { listingId: current.listing_id, image: processed };
 }
 
+async function deleteListingImage({ imageId, actor }) {
+  const current = await get('SELECT * FROM listing_images WHERE id = ? AND deleted_at IS NULL', [imageId]);
+  if (!current) {
+    throw validationError('Nie znaleziono zdjęcia ogłoszenia.');
+  }
+  if (!['admin', 'moderator'].includes(actor?.role)) {
+    const error = new Error('Brak uprawnień do usunięcia zdjęcia.');
+    error.code = 'FORBIDDEN';
+    throw error;
+  }
+  await run('UPDATE listing_images SET deleted_at = CURRENT_TIMESTAMP WHERE id = ?', [imageId]);
+  return { listingId: current.listing_id };
+}
+
 async function processListingUploads(userId, files = {}, options = {}) {
   const images = files.images || [];
   const video = (files.video || [])[0] || null;
@@ -387,12 +312,9 @@ async function updateImageModeration({ imageId, hidden, nsfwSeverity }) {
 }
 
 module.exports = {
-  FACE_BLUR_WARNING,
-  FACE_BLUR_FALLBACK_WARNING,
   LIMITS,
-  applyFaceBlur,
   applyWatermark,
-  detectFaceRectangle,
+  deleteListingImage,
   getDuplicateByHash,
   getUserMediaUsage,
   hashFile,

@@ -19,7 +19,7 @@ async function loadLocals(req, res, next) {
 
   if (!req.session.userId) return next();
   try {
-    res.locals.user = await get('SELECT id, name, username, account_type, email, role, coins, profile_verified, session_version FROM users WHERE id = ? AND deleted_at IS NULL', [req.session.userId]);
+    res.locals.user = await get('SELECT id, name, username, account_type, email, role, coins, profile_verified, email_verified_at, trust_score, session_version FROM users WHERE id = ? AND deleted_at IS NULL', [req.session.userId]);
     if (!res.locals.user || Number(req.session.sessionVersion || 0) !== Number(res.locals.user.session_version || 0)) {
       req.session.destroy(() => {});
       res.locals.user = null;

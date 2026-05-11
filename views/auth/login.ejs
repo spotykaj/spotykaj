@@ -1,6 +1,7 @@
 <%- include('../partials/header') %>
 <section class="auth-shell">
   <form class="form-card" action="/logowanie" method="post">
+    <input type="hidden" name="_csrf" value="<%= csrfToken %>">
     <p class="eyebrow">Dostęp</p>
     <h1>Logowanie</h1>
     <label>E-mail
@@ -11,6 +12,7 @@
     </label>
     <%- include('../partials/turnstile') %>
     <button class="button" type="submit">Zaloguj</button>
+    <p><a href="/przypomnij-haslo">Nie pamiętasz hasła?</a></p>
     <p>Nie masz konta? <a href="/rejestracja">Zarejestruj się</a>.</p>
   </form>
 </section>

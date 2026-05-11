@@ -54,6 +54,7 @@
                 <textarea name="body" rows="4" required maxlength="2000"></textarea>
               </label>
               <p class="message-cost">Koszt wysłania wiadomości: 5 Spotycoinów</p>
+              <%- include('../partials/turnstile') %>
               <button class="button" type="submit">Wyślij odpowiedź</button>
             </form>
           <% } else { %>

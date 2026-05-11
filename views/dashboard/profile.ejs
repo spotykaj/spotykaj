@@ -19,6 +19,28 @@
       <a class="ghost button-like" href="/panel">Wróć do panelu</a>
     </header>
 
+    <section class="dashboard-panel-card">
+      <div class="dashboard-card-head">
+        <div>
+          <p class="eyebrow">Zaufanie</p>
+          <h2>Status e-mail</h2>
+        </div>
+        <% if (profile.email_verified_at) { %>
+          <span class="status-chip verified-text">E-mail potwierdzony</span>
+        <% } else { %>
+          <span class="status-chip">E-mail niepotwierdzony</span>
+        <% } %>
+      </div>
+      <% if (profile.email_verified_at) { %>
+        <p>Adres potwierdzono: <%= new Date(profile.email_verified_at).toLocaleString('pl-PL') %>.</p>
+      <% } else { %>
+        <p>Potwierdź adres e-mail, aby korzystać z ogłoszeń, wiadomości i promocji.</p>
+        <form action="/weryfikacja-email/wyslij" method="post">
+          <button class="button small-button" type="submit">Wyślij link weryfikacyjny</button>
+        </form>
+      <% } %>
+    </section>
+
     <form class="dashboard-panel-card profile-settings-form" action="/panel/profile" method="post">
       <div class="dashboard-card-head">
         <div>
@@ -33,6 +55,7 @@
         </label>
         <label>E-mail
           <input type="email" name="email" value="<%= profile.email || '' %>" required maxlength="180">
+          <% if (!profile.email_verified_at) { %><span class="helper-text">Zmiana adresu wymaga ponownego potwierdzenia.</span><% } %>
         </label>
         <label>Imię i nazwisko
           <input type="text" name="full_name" value="<%= profile.name || '' %>" required maxlength="180" autocomplete="name">

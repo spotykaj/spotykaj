@@ -5,6 +5,7 @@ const verificationService = require('../services/verificationService');
 const reportService = require('../services/reportService');
 const fraudService = require('../services/fraudService');
 const mediaService = require('../services/mediaService');
+const auditService = require('../services/auditService');
 const { flash } = require('../middleware/flash');
 
 async function showModerator(req, res, next) {
@@ -162,6 +163,13 @@ async function updateImageModeration(req, res, next) {
       hidden: req.body.hidden === '1',
       nsfwSeverity: req.body.nsfw_severity
     });
+    await auditService.logAction({
+      adminId: res.locals.user.id,
+      actionType: 'moderate_listing_image',
+      targetType: 'listing_image',
+      targetId: req.params.id,
+      metadata: { hidden: req.body.hidden === '1', nsfwSeverity: req.body.nsfw_severity || 'standard' }
+    });
     flash(req, 'success', 'Status zdjęcia został zmieniony.');
     return res.redirect(req.get('referer') || '/moderator');
   } catch (error) {
@@ -176,10 +184,39 @@ async function replaceListingImage(req, res, next) {
       userId: res.locals.user.id,
       file: req.file
     });
+    await auditService.logAction({
+      adminId: res.locals.user.id,
+      actionType: 'replace_listing_image',
+      targetType: 'listing_image',
+      targetId: req.params.id
+    });
     flash(req, 'success', 'Poprawione zdjęcie zostało wgrane.');
     return res.redirect(req.get('referer') || '/moderator');
   } catch (error) {
     if (['VALIDATION_ERROR'].includes(error.code)) {
+      flash(req, 'error', error.message);
+      return res.redirect(req.get('referer') || '/moderator');
+    }
+    return next(error);
+  }
+}
+
+async function deleteListingImage(req, res, next) {
+  try {
+    await mediaService.deleteListingImage({
+      imageId: req.params.id,
+      actor: res.locals.user
+    });
+    await auditService.logAction({
+      adminId: res.locals.user.id,
+      actionType: 'delete_listing_image',
+      targetType: 'listing_image',
+      targetId: req.params.id
+    });
+    flash(req, 'success', 'Zdjęcie zostało usunięte.');
+    return res.redirect(req.get('referer') || '/moderator');
+  } catch (error) {
+    if (['VALIDATION_ERROR', 'FORBIDDEN'].includes(error.code)) {
       flash(req, 'error', error.message);
       return res.redirect(req.get('referer') || '/moderator');
     }
@@ -226,6 +263,7 @@ async function rejectPurchaseRequest(req, res, next) {
 module.exports = {
   approveVerificationRequest,
   approvePurchaseRequest,
+  deleteListingImage,
   rejectListing,
   rejectProfile,
   rejectVerificationRequest,

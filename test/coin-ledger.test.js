@@ -715,6 +715,7 @@ test('Spotycoin ledger records grants, spends, hash chain and cache balances', a
   assert.ok(brokenPrevious.errors.some((error) => error.includes('poprzedni hash')));
 
   const oldTurnstileEnabled = process.env.TURNSTILE_ENABLED;
+  const oldTurnstileSite = process.env.TURNSTILE_SITE_KEY;
   const oldTurnstileSecret = process.env.TURNSTILE_SECRET_KEY;
   process.env.TURNSTILE_ENABLED = 'false';
   let turnstilePassed = false;
@@ -722,6 +723,7 @@ test('Spotycoin ledger records grants, spends, hash chain and cache balances', a
   assert.equal(turnstilePassed, true);
 
   process.env.TURNSTILE_ENABLED = 'true';
+  process.env.TURNSTILE_SITE_KEY = 'test-site';
   process.env.TURNSTILE_SECRET_KEY = 'test-secret';
   const turnstileRes = {
     statusCode: null,
@@ -740,6 +742,8 @@ test('Spotycoin ledger records grants, spends, hash chain and cache balances', a
   assert.equal(turnstileRes.body.message, TURNSTILE_ERROR);
   if (typeof oldTurnstileEnabled === 'undefined') delete process.env.TURNSTILE_ENABLED;
   else process.env.TURNSTILE_ENABLED = oldTurnstileEnabled;
+  if (typeof oldTurnstileSite === 'undefined') delete process.env.TURNSTILE_SITE_KEY;
+  else process.env.TURNSTILE_SITE_KEY = oldTurnstileSite;
   if (typeof oldTurnstileSecret === 'undefined') delete process.env.TURNSTILE_SECRET_KEY;
   else process.env.TURNSTILE_SECRET_KEY = oldTurnstileSecret;
 

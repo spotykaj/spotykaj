@@ -1,6 +1,8 @@
 const fs = require('fs');
 const { run, get, all } = require('../db');
 const auditService = require('./auditService');
+const fraudService = require('./fraudService');
+const accountSecurityService = require('./accountSecurityService');
 
 function validationError(message) {
   const error = new Error(message);
@@ -28,13 +30,19 @@ function isAllowedImageSignature(filePath) {
   return isJpeg || isPng || isWebp;
 }
 
-function validateUploadedImage(file) {
+async function validateUploadedImage(userId, file) {
   if (!file || isAllowedImageSignature(file.path)) return;
   try {
     fs.unlinkSync(file.path);
   } catch (error) {
     // Best effort cleanup after rejecting an invalid upload.
   }
+  await fraudService.flagSuspicious({
+    userId,
+    eventType: 'blocked_upload',
+    score: 3,
+    metadata: { filename: file.originalname, mimetype: file.mimetype, reason: 'verification_signature' }
+  }).catch(() => {});
   throw validationError('Dodaj prawidłowy plik JPG, PNG albo WEBP.');
 }
 
@@ -58,8 +66,8 @@ async function submitRequest({ userId, documentFile, selfieFile, note }) {
   if (!documentFile || !selfieFile) {
     throw validationError('Dodaj zdjęcie dokumentu oraz selfie z kartką.');
   }
-  validateUploadedImage(documentFile);
-  validateUploadedImage(selfieFile);
+  await validateUploadedImage(userId, documentFile);
+  await validateUploadedImage(userId, selfieFile);
 
   const pending = await get(`
     SELECT id FROM verification_requests
@@ -80,6 +88,10 @@ async function submitRequest({ userId, documentFile, selfieFile, note }) {
     uploadedPath(selfieFile),
     String(note || '').trim() || null
   ]);
+  await accountSecurityService.notifyAdmins(
+    'Nowy wniosek o weryfikację profilu',
+    `Użytkownik ${userId} wysłał wniosek o weryfikację profilu.`
+  );
   return result.lastID;
 }
 

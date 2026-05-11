@@ -13,6 +13,33 @@
       </div>
     </section>
 
+    <section class="mobile-section order-backups" data-mobile-section data-mobile-count="<%= backups.length %>" data-mobile-open="true">
+      <h2>Backupy i odtwarzanie</h2>
+      <div class="empty">
+        <strong>Katalog backupów:</strong> <code><%= backupRoot %></code>
+        <br>
+        <a class="ghost button-like" href="/admin/health">Status techniczny</a>
+      </div>
+      <form action="/admin/backups/create" method="post">
+        <button class="button" type="submit">Utwórz backup bazy teraz</button>
+      </form>
+      <div class="table-wrap">
+        <table>
+          <thead><tr><th>Plik</th><th>Data</th><th>Rozmiar</th></tr></thead>
+          <tbody>
+            <% backups.forEach((backup) => { %>
+              <tr>
+                <td><code><%= backup.name %></code></td>
+                <td><%= backup.createdText %></td>
+                <td><%= backup.sizeText %></td>
+              </tr>
+            <% }) %>
+          </tbody>
+        </table>
+      </div>
+      <% if (backups.length === 0) { %><div class="empty">Brak backupów bazy.</div><% } %>
+    </section>
+
     <section class="mobile-section order-ledger" data-mobile-section data-mobile-count="<%= Number(ledgerIntegrity.count || 0) %>">
       <h2>Integralność księgi Spotycoin</h2>
       <div class="empty">
@@ -213,12 +240,14 @@
       <h2>Użytkownicy</h2>
       <div class="table-wrap">
         <table>
-          <thead><tr><th>Nazwa</th><th>E-mail</th><th>Rola</th><th>Spotycoin</th><th>Dodaj monety</th><th>Akcja</th></tr></thead>
+          <thead><tr><th>Nazwa</th><th>E-mail</th><th>Status e-mail</th><th>Zaufanie</th><th>Rola</th><th>Spotycoin</th><th>Dodaj monety</th><th>Akcja</th></tr></thead>
           <tbody>
             <% users.forEach((account) => { %>
               <tr>
                 <td><%= account.name %></td>
                 <td><%= account.email %></td>
+                <td><%= account.email_verified_at ? 'Potwierdzony' : 'Niepotwierdzony' %></td>
+                <td><%= Number(account.trust_score || 0).toLocaleString('pl-PL') %></td>
                 <td>
                   <% if (account.role === 'admin') { %>
                     Administrator
@@ -326,8 +355,8 @@
                     <input type="hidden" name="status" value="<%= listing.status === 'approved' || listing.status === 'active' ? 'hidden' : 'approved' %>">
                     <button class="ghost" type="submit"><%= listing.status === 'approved' || listing.status === 'active' ? 'Ukryj' : 'Pokaż' %></button>
                   </form>
-                  <form action="/ogloszenia/<%= listing.id %>?_method=DELETE" method="post" onsubmit="return confirm('Czy na pewno chcesz usunąć ogłoszenie?');">
-                    <button class="danger" type="submit">Usuń ogłoszenie</button>
+                  <form action="/admin/ogloszenia/<%= listing.id %>/usun-trwale" method="post" onsubmit="return confirm('Czy na pewno chcesz usunąć ogłoszenie?');">
+                    <button class="danger" type="submit">Usuń trwale</button>
                   </form>
                 </td>
               </tr>

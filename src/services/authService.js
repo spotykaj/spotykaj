@@ -1,5 +1,6 @@
 const bcrypt = require('bcryptjs');
 const { run, get } = require('../db');
+const accountSecurityService = require('./accountSecurityService');
 
 const ACCOUNT_TYPES = ['prywatne', 'agencja', 'salon_masazu'];
 const USERNAME_PATTERN = /^[A-Za-z0-9_-]+$/;
@@ -62,6 +63,7 @@ async function registerUser(payload = {}) {
     'INSERT INTO users (name, username, account_type, email, password_hash) VALUES (?, ?, ?, ?, ?)',
     [fullName, username, accountType, email, passwordHash]
   );
+  await accountSecurityService.sendVerificationEmail(result.lastID);
   return result.lastID;
 }
 

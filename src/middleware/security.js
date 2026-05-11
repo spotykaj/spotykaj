@@ -52,7 +52,15 @@ async function protectVerificationUploads(req, res, next) {
   }
 }
 
+function blockSensitivePaths(req, res, next) {
+  if (/\/(?:\.env|backups|logs|\.git)(?:\/|$)/i.test(req.path)) {
+    return res.status(404).render('error', { title: 'Nie znaleziono', message: 'Ta strona nie istnieje.' });
+  }
+  return next();
+}
+
 module.exports = {
+  blockSensitivePaths,
   protectVerificationUploads,
   sameOriginGuard
 };

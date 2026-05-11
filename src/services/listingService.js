@@ -4,7 +4,6 @@ const promotionService = require('./promotionService');
 const auditService = require('./auditService');
 const fraudService = require('./fraudService');
 
-const TATTOO_REMOVAL_PRICE = 20;
 const cache = new Map();
 
 async function cached(key, ttlMs, loader) {
@@ -32,12 +31,6 @@ function normalizeCreateFiles(files = {}) {
     images: files.images || [],
     video: files.video || []
   };
-}
-
-function parseTattooRemovalCount(value) {
-  const count = Number.parseInt(value || '0', 10);
-  if (!Number.isInteger(count) || count < 0) return 0;
-  return count;
 }
 
 function normalizeArray(value) {
@@ -284,6 +277,17 @@ async function countUserListingSubmissions(userId, hours = 24) {
   return Number(row?.count || 0);
 }
 
+async function countUserActiveListings(userId) {
+  const row = await get(`
+    SELECT COUNT(*) AS count
+    FROM listings
+    WHERE user_id = ?
+      AND deleted_at IS NULL
+      AND status IN ('approved', 'active')
+  `, [userId]);
+  return Number(row?.count || 0);
+}
+
 async function createListing(userId, data, files = {}, context = {}) {
   const { title, description, price, city, region, category, age } = data;
   const gender = inferGender(category, data.gender);
@@ -340,13 +344,6 @@ async function createListing(userId, data, files = {}, context = {}) {
     throw error;
   }
 
-  const tattooRemovalCount = parseTattooRemovalCount(data.tattooRemovalCount);
-  if (tattooRemovalCount > media.images.length) {
-    const error = new Error('Liczba zdjęć do usuwania tatuażu nie może być większa niż liczba dodanych zdjęć.');
-    error.code = 'VALIDATION_ERROR';
-    throw error;
-  }
-
   const promotionOption = getPromotionOption(data.promotionDays || 0);
   if (!promotionOption) {
     const error = new Error('Wybierz prawidłową opcję promowania.');
@@ -354,10 +351,8 @@ async function createListing(userId, data, files = {}, context = {}) {
     throw error;
   }
 
-  const faceBlur = 0;
-  const tattooRemovalCost = tattooRemovalCount * TATTOO_REMOVAL_PRICE;
   const promotionCost = promotionOption.price;
-  const totalCost = tattooRemovalCost + promotionCost;
+  const totalCost = promotionCost;
 
   const promotedUntil = promotionOption.days > 0
     ? toSqlDate(new Date(Date.now() + promotionOption.days * 24 * 60 * 60 * 1000))
@@ -372,9 +367,9 @@ async function createListing(userId, data, files = {}, context = {}) {
     const result = await run(`
       INSERT INTO listings (
         user_id, title, description, price, city, region, category,
-        status, moderation_reason, created_ip, promoted_until, video_path, face_blur, tattoo_removal_count, create_options_cost
+        status, moderation_reason, created_ip, promoted_until, video_path, create_options_cost
       )
-      VALUES (?, ?, ?, ?, ?, ?, ?, 'pending', ?, ?, ?, ?, ?, ?, ?)
+      VALUES (?, ?, ?, ?, ?, ?, ?, 'pending', ?, ?, ?, ?, ?)
     `, [
       userId,
       title.trim(),
@@ -387,8 +382,6 @@ async function createListing(userId, data, files = {}, context = {}) {
       context.ip || null,
       promotedUntil,
       videoPath,
-      faceBlur,
-      tattooRemovalCount,
       totalCost
     ]);
 
@@ -474,6 +467,43 @@ async function deleteListing(listingId, user) {
   });
 }
 
+async function permanentlyDeleteListing(listingId, user) {
+  if (user?.role !== 'admin') {
+    const error = new Error('Tylko administrator może trwale usuwać ogłoszenia.');
+    error.code = 'FORBIDDEN';
+    throw error;
+  }
+  const listing = await get('SELECT * FROM listings WHERE id = ?', [listingId]);
+  if (!listing) {
+    const error = new Error('Nie znaleziono ogłoszenia.');
+    error.code = 'NOT_FOUND';
+    throw error;
+  }
+
+  await run('BEGIN TRANSACTION');
+  try {
+    await run('UPDATE media_assets SET listing_id = NULL WHERE listing_id = ?', [listingId]);
+    await run('DELETE FROM user_favorites WHERE listing_id = ?', [listingId]);
+    await run('DELETE FROM listing_reports WHERE listing_id = ?', [listingId]);
+    await run('DELETE FROM tips WHERE listing_id = ?', [listingId]);
+    await run('DELETE FROM messages WHERE listing_id = ?', [listingId]);
+    await run('DELETE FROM listing_images WHERE listing_id = ?', [listingId]);
+    await run('DELETE FROM listings WHERE id = ?', [listingId]);
+    await run('COMMIT');
+  } catch (error) {
+    await run('ROLLBACK');
+    throw error;
+  }
+
+  await auditService.logAction({
+    adminId: user.id,
+    actionType: 'listing_permanent_delete',
+    targetType: 'listing',
+    targetId: listingId,
+    metadata: { ownerId: listing.user_id }
+  });
+}
+
 function normalizeStatus(status) {
   if (['pending', 'approved', 'rejected', 'hidden'].includes(status)) return status;
   if (status === 'active') return 'approved';
@@ -534,6 +564,7 @@ async function updateListingVerification(listingId, verified) {
 }
 
 module.exports = {
+  countUserActiveListings,
   countUserListingSubmissions,
   canViewListing,
   createListing,
@@ -547,6 +578,7 @@ module.exports = {
   getListingsWaitingForVerification,
   getListingWithImages,
   getOwnedListing,
+  permanentlyDeleteListing,
   getUserListings,
   updateListingStatus,
   updateListingVerification

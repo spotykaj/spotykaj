@@ -270,7 +270,7 @@
       </div>
       <div class="media-layout">
         <div class="premium-upload-card">
-          <input class="native-file-hidden" id="listing-images" type="file" name="images" accept="image/*" multiple required data-photo-input>
+          <input class="native-file-hidden" id="listing-images" type="file" name="images" accept=".jpg,.jpeg,.png,.webp,image/jpeg,image/png,image/webp" multiple required data-photo-input>
           <label class="upload-cta" for="listing-images">Wybierz zdjęcia</label>
           <strong>Dodaj od 3 do 6 zdjęć</strong>
           <p data-photo-count>Nie wybrano zdjęć.</p>
@@ -278,17 +278,12 @@
         <div class="photo-carousel" data-photo-preview-slider aria-label="Podgląd zdjęć">
           <p class="empty-media">Wybrane zdjęcia pojawią się tutaj.</p>
         </div>
-        <input type="hidden" name="tattooRemovalCount" value="0" data-tattoo-count>
         <div class="premium-upload-card video">
-          <input class="native-file-hidden" id="listing-video" type="file" name="video" accept="video/*" data-video-input>
+          <input class="native-file-hidden" id="listing-video" type="file" name="video" accept=".mp4,video/mp4" data-video-input>
           <label class="upload-cta" for="listing-video">Wybierz wideo</label>
           <strong>Wideo jest opcjonalne i obecnie darmowe</strong>
           <p data-video-file>Nie wybrano pliku wideo.</p>
         </div>
-        <aside class="modern-cost-summary">
-          <span>Koszt retuszu:</span>
-          <strong><span data-retouch-total>0</span> Spotycoinów</strong>
-        </aside>
       </div>
     </section>
 
@@ -310,7 +305,6 @@
         <span>Łączny koszt opcji:</span>
         <strong><span data-cost-total>0</span> Spotycoinów</strong>
       </aside>
-      <span hidden data-cost-tattoo>0</span>
       <span hidden data-cost-promotion>0</span>
     </section>
 
@@ -326,10 +320,10 @@
         <div><span>Wiek</span><strong data-summary-value="age">-</strong></div>
         <div><span>Cena za godz.</span><strong data-summary-value="price">-</strong></div>
         <div><span>Promowanie</span><strong data-summary-value="promotion">Brak promocji</strong></div>
-        <div><span>Koszt retuszu</span><strong><span data-summary-value="retouch">0</span> Spotycoinów</strong></div>
-        <div><span>Total Spotycoin</span><strong><span data-summary-value="total">0</span> Spotycoinów</strong></div>
+        <div><span>Łączny koszt</span><strong><span data-summary-value="total">0</span> Spotycoinów</strong></div>
         <div><span>Liczba zdjęć</span><strong data-summary-value="photos">0</strong></div>
       </div>
+      <%- include('../partials/turnstile') %>
       <button class="publish-button" type="submit">Dodaj ogłoszenie</button>
     </section>
 
@@ -364,13 +358,10 @@
     const photoInput = form.querySelector('[data-photo-input]');
     const photoCount = form.querySelector('[data-photo-count]');
     const photoPreviewSlider = form.querySelector('[data-photo-preview-slider]');
-    const tattooInput = form.querySelector('[data-tattoo-count]');
     const videoInput = form.querySelector('[data-video-input]');
     const videoFile = form.querySelector('[data-video-file]');
     const promotionOptions = Array.from(form.querySelectorAll('[data-promotion-option]'));
-    const retouchTotal = form.querySelector('[data-retouch-total]');
     const costTotal = form.querySelector('[data-cost-total]');
-    const costTattoo = form.querySelector('[data-cost-tattoo]');
     const costPromotion = form.querySelector('[data-cost-promotion]');
     const nextButton = form.querySelector('[data-step-next]');
     const prevButton = form.querySelector('[data-step-prev]');
@@ -382,7 +373,6 @@
       age: form.querySelector('[data-summary-value="age"]'),
       price: form.querySelector('[data-summary-value="price"]'),
       promotion: form.querySelector('[data-summary-value="promotion"]'),
-      retouch: form.querySelector('[data-summary-value="retouch"]'),
       photos: form.querySelector('[data-summary-value="photos"]'),
       total: form.querySelector('[data-summary-value="total"]')
     };
@@ -557,22 +547,11 @@
           <img alt="">
           <div class="media-preview-body">
             <strong></strong>
-            <label class="media-toggle"><input type="checkbox" data-tattoo-image><span>Usunięcie tatuażu</span><em>20 Spotycoinów</em></label>
-            <textarea name="tattooDescription[]" rows="3" placeholder="Opisz co zamazać" hidden></textarea>
           </div>
         `;
         card.querySelector('img').src = item.url;
         card.querySelector('img').alt = `Podgląd zdjęcia ${index + 1}`;
         card.querySelector('strong').textContent = item.file.name;
-        const tattooToggle = card.querySelector('[data-tattoo-image]');
-        const tattooDescription = card.querySelector('textarea');
-        tattooToggle.checked = item.tattooRemoval;
-        tattooDescription.hidden = !item.tattooRemoval;
-        tattooToggle.addEventListener('change', () => {
-          item.tattooRemoval = tattooToggle.checked;
-          tattooDescription.hidden = !item.tattooRemoval;
-          updateCosts();
-        });
         card.querySelector('.remove-media').addEventListener('click', () => {
           URL.revokeObjectURL(item.url);
           selectedPhotos.splice(index, 1);
@@ -585,19 +564,13 @@
     }
 
     function updateCosts() {
-      const tattooCount = selectedPhotos.filter((item) => item.tattooRemoval).length;
-      const tattooCost = tattooCount * 20;
       const promotion = promotionOptions.find((option) => option.checked);
       const promotionCost = Number(promotion?.dataset.price || 0);
-      const total = tattooCost + promotionCost;
-      tattooInput.value = String(tattooCount);
+      const total = promotionCost;
       photoCount.textContent = `Wybrano ${selectedPhotos.length} z 6 zdjęć`;
-      retouchTotal.textContent = String(tattooCost);
-      costTattoo.textContent = String(tattooCost);
       costPromotion.textContent = String(promotionCost);
       costTotal.textContent = String(total);
       summary.total.textContent = String(total);
-      summary.retouch.textContent = String(tattooCost);
       summary.promotion.textContent = promotion?.closest('.promotion-card')?.querySelector('span')?.textContent || 'Brak promocji';
       summary.photos.textContent = String(selectedPhotos.length);
     }
@@ -712,8 +685,7 @@
       const rejectedCount = incomingFiles.length - acceptedFiles.length;
       selectedPhotos = selectedPhotos.concat(acceptedFiles.map((file) => ({
         file,
-        url: URL.createObjectURL(file),
-        tattooRemoval: false
+        url: URL.createObjectURL(file)
       })));
       syncPhotoInputFiles();
       renderPhotoPreviews();

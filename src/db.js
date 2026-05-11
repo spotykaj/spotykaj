@@ -147,6 +147,12 @@ async function initDb() {
   if (!(await columnExists('users', 'profile_verified'))) {
     await run('ALTER TABLE users ADD COLUMN profile_verified INTEGER NOT NULL DEFAULT 0');
   }
+  if (!(await columnExists('users', 'email_verified_at'))) {
+    await run('ALTER TABLE users ADD COLUMN email_verified_at TEXT');
+  }
+  if (!(await columnExists('users', 'trust_score'))) {
+    await run('ALTER TABLE users ADD COLUMN trust_score INTEGER NOT NULL DEFAULT 0');
+  }
   if (!(await columnExists('users', 'deleted_at'))) {
     await run('ALTER TABLE users ADD COLUMN deleted_at TEXT');
   }
@@ -210,12 +216,6 @@ async function initDb() {
   await run("UPDATE listings SET status = 'approved' WHERE status = 'active'");
   if (!(await columnExists('listings', 'video_path'))) {
     await run('ALTER TABLE listings ADD COLUMN video_path TEXT');
-  }
-  if (!(await columnExists('listings', 'face_blur'))) {
-    await run('ALTER TABLE listings ADD COLUMN face_blur INTEGER NOT NULL DEFAULT 0');
-  }
-  if (!(await columnExists('listings', 'tattoo_removal_count'))) {
-    await run('ALTER TABLE listings ADD COLUMN tattoo_removal_count INTEGER NOT NULL DEFAULT 0');
   }
   if (!(await columnExists('listings', 'create_options_cost'))) {
     await run('ALTER TABLE listings ADD COLUMN create_options_cost INTEGER NOT NULL DEFAULT 0');
@@ -427,6 +427,28 @@ async function initDb() {
     )
   `);
   await run(`
+    CREATE TABLE IF NOT EXISTS email_verification_tokens (
+      id INTEGER PRIMARY KEY AUTOINCREMENT,
+      user_id INTEGER NOT NULL,
+      token_hash TEXT NOT NULL UNIQUE,
+      expires_at TEXT NOT NULL,
+      used_at TEXT,
+      created_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP,
+      FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE
+    )
+  `);
+  await run(`
+    CREATE TABLE IF NOT EXISTS password_reset_tokens (
+      id INTEGER PRIMARY KEY AUTOINCREMENT,
+      user_id INTEGER NOT NULL,
+      token_hash TEXT NOT NULL UNIQUE,
+      expires_at TEXT NOT NULL,
+      used_at TEXT,
+      created_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP,
+      FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE
+    )
+  `);
+  await run(`
     CREATE TABLE IF NOT EXISTS tips (
       id INTEGER PRIMARY KEY AUTOINCREMENT,
       listing_id INTEGER NOT NULL,
@@ -449,6 +471,8 @@ async function initDb() {
   await run('CREATE INDEX IF NOT EXISTS idx_reports_status ON listing_reports(status, created_at)');
   await run('CREATE INDEX IF NOT EXISTS idx_audit_timestamp ON admin_audit_log(timestamp)');
   await run('CREATE INDEX IF NOT EXISTS idx_favorites_user ON user_favorites(user_id, created_at)');
+  await run('CREATE INDEX IF NOT EXISTS idx_email_verification_tokens_hash ON email_verification_tokens(token_hash, expires_at, used_at)');
+  await run('CREATE INDEX IF NOT EXISTS idx_password_reset_tokens_hash ON password_reset_tokens(token_hash, expires_at, used_at)');
   await run('CREATE INDEX IF NOT EXISTS idx_tips_sender ON tips(sender_id, created_at)');
   await run('CREATE INDEX IF NOT EXISTS idx_tips_receiver ON tips(receiver_id, created_at)');
 }

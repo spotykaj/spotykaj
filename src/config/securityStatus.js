@@ -1,5 +1,6 @@
 function isTurnstileEnabled() {
-  return String(process.env.TURNSTILE_ENABLED || 'false').toLowerCase() === 'true';
+  return String(process.env.TURNSTILE_ENABLED || 'false').toLowerCase() === 'true'
+    && Boolean(process.env.TURNSTILE_SITE_KEY && process.env.TURNSTILE_SECRET_KEY);
 }
 
 function getTurnstileConfig() {

@@ -1,5 +1,6 @@
 const { run, all } = require('../db');
 const auditService = require('./auditService');
+const accountSecurityService = require('./accountSecurityService');
 
 const ALLOWED_REASONS = ['Spam', 'Fałszywe zdjęcia', 'Nieletni', 'Scam', 'Inne'];
 
@@ -17,6 +18,10 @@ async function createReport({ listingId, reporterId, reason, note }) {
     INSERT INTO listing_reports (listing_id, reporter_id, reason, note, status)
     VALUES (?, ?, ?, ?, 'pending')
   `, [listingId, reporterId || null, reason, String(note || '').trim() || null]);
+  await accountSecurityService.notifyAdmins(
+    'Nowe zgłoszenie ogłoszenia',
+    `Dodano zgłoszenie ogłoszenia ${listingId}. Powód: ${reason}.`
+  );
   return result.lastID;
 }
 

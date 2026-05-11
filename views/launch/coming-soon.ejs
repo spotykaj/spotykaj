@@ -21,6 +21,7 @@
       <% } %>
 
       <form class="launch-form" action="/powiadom-mnie" method="post">
+        <input type="hidden" name="_csrf" value="<%= csrfToken %>">
         <label class="sr-only" for="launch-email">Adres e-mail</label>
         <input id="launch-email" type="email" name="email" placeholder="Twój adres e-mail" autocomplete="email" required>
         <button type="submit">Powiadom mnie</button>

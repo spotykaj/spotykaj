@@ -143,9 +143,14 @@
         <% } else if (!user) { %>
           <a class="button secondary-action" href="/logowanie">Daj napiwek</a>
         <% } %>
-        <% if (user && user.role === 'admin') { %>
+        <% if (user && isOwner && user.role !== 'admin') { %>
           <form action="/ogloszenia/<%= listing.id %>?_method=DELETE" method="post" onsubmit="return confirm('Czy na pewno chcesz usunąć ogłoszenie?');">
             <button class="danger" type="submit">Usuń ogłoszenie</button>
+          </form>
+        <% } %>
+        <% if (user && user.role === 'admin') { %>
+          <form action="/admin/ogloszenia/<%= listing.id %>/usun-trwale" method="post" onsubmit="return confirm('Czy na pewno chcesz usunąć ogłoszenie?');">
+            <button class="danger" type="submit">Usuń trwale</button>
           </form>
         <% } %>
       </div>
@@ -243,6 +248,9 @@
                   <input type="file" name="image" accept=".jpg,.jpeg,.png,.webp,image/jpeg,image/png,image/webp" required>
                 </label>
                 <button class="ghost" type="submit">Wgraj poprawione zdjęcie</button>
+              </form>
+              <form action="/<%= user.role === 'admin' ? 'admin' : 'moderator' %>/media/<%= image.id %>/usun" method="post" onsubmit="return confirm('Czy na pewno usunąć to zdjęcie?');">
+                <button class="danger" type="submit">Usuń zdjęcie</button>
               </form>
               <form action="/<%= user.role === 'admin' ? 'admin' : 'moderator' %>/media/<%= image.id %>/moderacja" method="post">
                 <label>Widoczność
@@ -344,6 +352,7 @@
     const sendButton = document.querySelector('[data-message-send]');
     const messageText = document.querySelector('[data-message-text]');
     const status = document.querySelector('[data-message-status]');
+    const csrfToken = document.querySelector('meta[name="csrf-token"]')?.content || '';
 
     function setStatus(message, type) {
       status.hidden = false;
@@ -395,7 +404,7 @@
         const turnstileToken = modal.querySelector('[name="cf-turnstile-response"]')?.value || '';
         const response = await fetch(`/ogloszenia/${detail.dataset.listingId}/wiadomosc`, {
           method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
+          headers: { 'Content-Type': 'application/json', 'X-CSRF-Token': csrfToken },
           body: JSON.stringify({ message: text, 'cf-turnstile-response': turnstileToken })
         });
         const payload = await response.json();

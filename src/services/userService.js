@@ -1,5 +1,6 @@
 const { run, get, all } = require('../db');
 const auditService = require('./auditService');
+const accountSecurityService = require('./accountSecurityService');
 const bcrypt = require('bcryptjs');
 
 const ALLOWED_ROLES = ['user', 'moderator', 'admin'];
@@ -13,7 +14,7 @@ function validationError(message) {
 }
 
 async function getUsersForAdmin() {
-  return all('SELECT id, name, email, role, coins, profile_verified, created_at FROM users ORDER BY created_at DESC');
+  return all('SELECT id, name, email, role, coins, profile_verified, email_verified_at, trust_score, created_at FROM users ORDER BY created_at DESC');
 }
 
 async function getProfilesForModeration() {
@@ -35,7 +36,7 @@ async function ensureAdminActor(actor) {
 async function updateUserRole(userId, role, actor = null) {
   await ensureAdminActor(actor);
   const normalizedRole = ALLOWED_ROLES.includes(role) ? role : 'user';
-  const current = await get('SELECT id, role FROM users WHERE id = ?', [userId]);
+  const current = await get('SELECT id, role, email FROM users WHERE id = ?', [userId]);
   if (!current) {
     const error = new Error('Nie znaleziono użytkownika.');
     error.code = 'NOT_FOUND';
@@ -57,6 +58,11 @@ async function updateUserRole(userId, role, actor = null) {
     targetId: userId,
     metadata: { from: current.role, to: normalizedRole }
   });
+  await accountSecurityService.sendSecurityAlert(
+    current.id,
+    'Zmiana uprawnień konta',
+    `Administrator zmienił rolę Twojego konta z "${current.role}" na "${normalizedRole}".`
+  );
 }
 
 async function updateProfileVerification(userId, verified) {
@@ -69,7 +75,7 @@ async function updateProfileVerification(userId, verified) {
 }
 
 async function getUserProfile(userId) {
-  const user = await get('SELECT id, name, username, account_type, first_name, last_name, email, profile_verified, coins FROM users WHERE id = ?', [userId]);
+  const user = await get('SELECT id, name, username, account_type, first_name, last_name, email, profile_verified, email_verified_at, trust_score, coins FROM users WHERE id = ?', [userId]);
   if (!user) {
     const error = new Error('Nie znaleziono użytkownika.');
     error.code = 'NOT_FOUND';
@@ -87,6 +93,12 @@ async function updateUserProfile(userId, payload = {}) {
   const accountType = ACCOUNT_TYPES.includes(payload.account_type) ? payload.account_type : '';
   const password = String(payload.password || '');
   const passwordConfirmation = String(payload.password_confirmation || '');
+  const current = await get('SELECT id, email FROM users WHERE id = ?', [userId]);
+  if (!current) {
+    const error = new Error('Nie znaleziono użytkownika.');
+    error.code = 'NOT_FOUND';
+    throw error;
+  }
 
   if (username.length < 3 || username.length > 30 || !USERNAME_PATTERN.test(username)) {
     throw validationError('Nazwa użytkownika musi mieć 3-30 znaków i może zawierać tylko litery, cyfry, podkreślenie oraz myślnik.');
@@ -117,15 +129,28 @@ async function updateUserProfile(userId, payload = {}) {
     const passwordHash = await bcrypt.hash(password, 10);
     await run(`
       UPDATE users
-      SET name = ?, username = ?, account_type = ?, first_name = ?, last_name = ?, email = ?, password_hash = ?
+      SET name = ?, username = ?, account_type = ?, first_name = ?, last_name = ?, email = ?, password_hash = ?, email_verified_at = CASE WHEN email = ? THEN email_verified_at ELSE NULL END
       WHERE id = ?
-    `, [fullName, username, accountType, firstName || null, lastName || null, email, passwordHash, userId]);
+    `, [fullName, username, accountType, firstName || null, lastName || null, email, passwordHash, current.email, userId]);
   } else {
     await run(`
       UPDATE users
-      SET name = ?, username = ?, account_type = ?, first_name = ?, last_name = ?, email = ?
+      SET name = ?, username = ?, account_type = ?, first_name = ?, last_name = ?, email = ?, email_verified_at = CASE WHEN email = ? THEN email_verified_at ELSE NULL END
       WHERE id = ?
-    `, [fullName, username, accountType, firstName || null, lastName || null, email, userId]);
+    `, [fullName, username, accountType, firstName || null, lastName || null, email, current.email, userId]);
+  }
+
+  if (password) {
+    await accountSecurityService.sendSecurityAlert(userId, 'Hasło zostało zmienione', 'Hasło do Twojego konta Spotykaj zostało zmienione.');
+  }
+  if (email !== current.email) {
+    await accountSecurityService.sendSecurityAlertToEmail(
+      current.email,
+      'Zmieniono adres e-mail konta',
+      'Adres e-mail Twojego konta Spotykaj został zmieniony. Jeżeli to nie była Twoja akcja, natychmiast skontaktuj się z administracją.'
+    );
+    await accountSecurityService.sendSecurityAlert(userId, 'Zmieniono adres e-mail konta', 'Adres e-mail konta został zmieniony. Potwierdź nowy adres, aby korzystać z pełnych funkcji.');
+    await accountSecurityService.sendVerificationEmail(userId);
   }
 
   return getUserProfile(userId);

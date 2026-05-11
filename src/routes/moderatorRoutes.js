@@ -2,8 +2,19 @@ const express = require('express');
 const moderatorController = require('../controllers/moderatorController');
 const { requireModerator } = require('../middleware/auth');
 const { upload } = require('../utils/upload');
+const { flash } = require('../middleware/flash');
+const { requireCsrf } = require('../middleware/csrf');
 
 const router = express.Router();
+const handleImageUpload = upload.single('image');
+
+function uploadReplacementImage(req, res, next) {
+  handleImageUpload(req, res, (error) => {
+    if (!error) return next();
+    flash(req, 'error', error.code === 'LIMIT_FILE_SIZE' ? 'Plik jest za duży.' : error.message);
+    return res.redirect(req.get('referer') || '/moderator');
+  });
+}
 
 router.get('/moderator', requireModerator, moderatorController.showModerator);
 router.post('/moderator/weryfikacje/:id/zatwierdz', requireModerator, moderatorController.approveVerificationRequest);
@@ -15,7 +26,8 @@ router.post('/moderator/ogloszenia/:id/odrzuc', requireModerator, moderatorContr
 router.post('/moderator/ogloszenia/:id/status', requireModerator, moderatorController.updateListingStatus);
 router.post('/moderator/zgloszenia/:id/rozpatrz', requireModerator, moderatorController.reviewReport);
 router.post('/moderator/media/:id/moderacja', requireModerator, moderatorController.updateImageModeration);
-router.post('/moderator/media/:id/zastap', requireModerator, upload.single('image'), moderatorController.replaceListingImage);
+router.post('/moderator/media/:id/zastap', requireModerator, uploadReplacementImage, requireCsrf, moderatorController.replaceListingImage);
+router.post('/moderator/media/:id/usun', requireModerator, moderatorController.deleteListingImage);
 router.post('/moderator/wnioski-spotycoin/:id/zatwierdz', requireModerator, moderatorController.approvePurchaseRequest);
 router.post('/moderator/wnioski-spotycoin/:id/odrzuc', requireModerator, moderatorController.rejectPurchaseRequest);
 

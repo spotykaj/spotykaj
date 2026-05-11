@@ -42,6 +42,13 @@ async function showEditListing(req, res, next) {
 async function createListing(req, res, next) {
   try {
     if (res.locals.user.role !== 'admin') {
+      const activeCount = await listingService.countUserActiveListings(res.locals.user.id);
+      if (activeCount >= 5) {
+        flash(req, 'error', 'Osiągnięto limit 5 aktywnych ogłoszeń.');
+        return res.redirect('/panel');
+      }
+    }
+    if (res.locals.user.role !== 'admin') {
       const recentCount = await listingService.countUserListingSubmissions(res.locals.user.id, 24);
       if (recentCount >= 5) {
         flash(req, 'error', 'Możesz dodać maksymalnie 5 ogłoszeń w ciągu 24 godzin.');
@@ -148,7 +155,7 @@ async function deleteListing(req, res, next) {
   try {
     await listingService.deleteListing(req.params.id, res.locals.user);
     flash(req, 'success', 'Ogłoszenie zostało usunięte.');
-    res.redirect(res.locals.user.role === 'admin' ? '/admin' : '/panel');
+    res.redirect('/panel');
   } catch (error) {
     if (error.code === 'FORBIDDEN') {
       flash(req, 'error', error.message);
